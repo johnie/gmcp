@@ -1,0 +1,50 @@
+# Node modules
+node_modules/
+
+# Environment files
+.env
+.env.local
+
+# Credentials and tokens (security)
+credentials.json
+token.json
+*.credentials.json
+*.token.json
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Test files
+*.test.ts
+*.spec.ts
+test/
+tests/
+
+# Build artifacts
+dist/
+build/
+
+# Documentation
+*.md
+!README.md
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.circleci/
