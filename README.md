@@ -1,4 +1,4 @@
-# Gmail MCP Server
+# GMCP Server
 
 Model Context Protocol (MCP) server for Gmail API with OAuth2 authentication. Enables LLMs to search and interact with Gmail messages for Google Workspace accounts.
 

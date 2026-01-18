@@ -2,31 +2,113 @@
  * Gmail search tool for MCP Server
  */
 
-import { z } from 'zod';
-import type { GmailClient } from '../gmail.ts';
+import { z } from "zod";
+import type { GmailClient } from "../gmail.ts";
 
 /**
  * Input schema for gmail_search_emails tool
  */
 export const SearchEmailsInputSchema = z.object({
-  query: z.string()
-    .min(1, 'Query cannot be empty')
-    .describe('Gmail search query using Gmail search syntax (e.g., "from:user@example.com subject:test is:unread")'),
-  max_results: z.number()
+  query: z
+    .string()
+    .min(1, "Query cannot be empty")
+    .describe(
+      'Gmail search query using Gmail search syntax (e.g., "from:user@example.com subject:test is:unread")'
+    ),
+  max_results: z
+    .number()
     .int()
     .min(1)
     .max(100)
     .default(10)
-    .describe('Maximum number of emails to return (default: 10, max: 100)'),
-  include_body: z.boolean()
+    .describe("Maximum number of emails to return (default: 10, max: 100)"),
+  include_body: z
+    .boolean()
     .default(false)
-    .describe('Whether to include full email body in results (default: false)'),
-  page_token: z.string()
+    .describe("Whether to include full email body in results (default: false)"),
+  page_token: z
+    .string()
     .optional()
-    .describe('Token for pagination to fetch next page of results'),
+    .describe("Token for pagination to fetch next page of results"),
 });
 
 export type SearchEmailsInput = z.infer<typeof SearchEmailsInputSchema>;
+
+/**
+ * Format email for structured output
+ */
+function formatEmailForOutput(email: {
+  id: string;
+  threadId: string;
+  subject: string;
+  from: string;
+  to: string;
+  date: string;
+  snippet: string;
+  body?: string;
+  labels?: string[];
+}) {
+  return {
+    id: email.id,
+    thread_id: email.threadId,
+    subject: email.subject,
+    from: email.from,
+    to: email.to,
+    date: email.date,
+    snippet: email.snippet,
+    ...(email.body ? { body: email.body } : {}),
+    ...(email.labels ? { labels: email.labels } : {}),
+  };
+}
+
+/**
+ * Generate markdown for a single email
+ */
+function generateEmailMarkdown(email: {
+  id: string;
+  threadId: string;
+  subject: string;
+  from: string;
+  to: string;
+  date: string;
+  snippet: string;
+  body?: string;
+  labels?: string[];
+}): string[] {
+  const lines: string[] = [];
+
+  lines.push(`## ${email.subject}`);
+  lines.push(`- **From**: ${email.from}`);
+  lines.push(`- **To**: ${email.to}`);
+  lines.push(`- **Date**: ${email.date}`);
+  lines.push(`- **ID**: ${email.id}`);
+  lines.push(`- **Thread ID**: ${email.threadId}`);
+
+  if (email.labels && email.labels.length > 0) {
+    lines.push(`- **Labels**: ${email.labels.join(", ")}`);
+  }
+
+  lines.push("");
+  lines.push(`**Snippet**: ${email.snippet}`);
+
+  if (email.body) {
+    lines.push("");
+    lines.push("**Body**:");
+    lines.push("```");
+    const bodyPreview =
+      email.body.length > 500
+        ? `${email.body.substring(0, 500)}...`
+        : email.body;
+    lines.push(bodyPreview);
+    lines.push("```");
+  }
+
+  lines.push("");
+  lines.push("---");
+  lines.push("");
+
+  return lines;
+}
 
 /**
  * Gmail search emails tool implementation
@@ -48,82 +130,50 @@ export async function searchEmailsTool(
       total_estimate: result.total_estimate,
       count: result.emails.length,
       has_more: result.has_more,
-      ...(result.next_page_token ? { next_page_token: result.next_page_token } : {}),
-      emails: result.emails.map(email => ({
-        id: email.id,
-        thread_id: email.threadId,
-        subject: email.subject,
-        from: email.from,
-        to: email.to,
-        date: email.date,
-        snippet: email.snippet,
-        ...(email.body ? { body: email.body } : {}),
-        ...(email.labels ? { labels: email.labels } : {}),
-      })),
+      ...(result.next_page_token
+        ? { next_page_token: result.next_page_token }
+        : {}),
+      emails: result.emails.map(formatEmailForOutput),
     };
 
     // Format as markdown for readability
     const lines: string[] = [
       `# Gmail Search Results: "${params.query}"`,
-      '',
+      "",
       `Found approximately ${result.total_estimate} emails (showing ${result.emails.length})`,
-      '',
+      "",
     ];
 
     if (result.emails.length === 0) {
-      lines.push('No emails found matching the query.');
+      lines.push("No emails found matching the query.");
     } else {
       for (const email of result.emails) {
-        lines.push(`## ${email.subject}`);
-        lines.push(`- **From**: ${email.from}`);
-        lines.push(`- **To**: ${email.to}`);
-        lines.push(`- **Date**: ${email.date}`);
-        lines.push(`- **ID**: ${email.id}`);
-        lines.push(`- **Thread ID**: ${email.threadId}`);
-
-        if (email.labels && email.labels.length > 0) {
-          lines.push(`- **Labels**: ${email.labels.join(', ')}`);
-        }
-
-        lines.push('');
-        lines.push(`**Snippet**: ${email.snippet}`);
-
-        if (email.body) {
-          lines.push('');
-          lines.push('**Body**:');
-          lines.push('```');
-          // Truncate body if too long
-          const bodyPreview = email.body.length > 500
-            ? email.body.substring(0, 500) + '...'
-            : email.body;
-          lines.push(bodyPreview);
-          lines.push('```');
-        }
-
-        lines.push('');
-        lines.push('---');
-        lines.push('');
+        lines.push(...generateEmailMarkdown(email));
       }
 
       if (result.has_more) {
-        lines.push('');
-        lines.push(`**Note**: More results available. Use page_token: "${result.next_page_token}" to fetch the next page.`);
+        lines.push("");
+        lines.push(
+          `**Note**: More results available. Use page_token: "${result.next_page_token}" to fetch the next page.`
+        );
       }
     }
 
-    const textContent = lines.join('\n');
+    const textContent = lines.join("\n");
 
     return {
-      content: [{ type: 'text' as const, text: textContent }],
+      content: [{ type: "text" as const, text: textContent }],
       structuredContent: output,
     };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     return {
-      content: [{
-        type: 'text' as const,
-        text: `Error searching emails: ${errorMessage}`,
-      }],
+      content: [
+        {
+          type: "text" as const,
+          text: `Error searching emails: ${errorMessage}`,
+        },
+      ],
       isError: true,
     };
   }

@@ -1,8 +1,8 @@
 /**
- * TypeScript type definitions for Gmail MCP Server
+ * TypeScript type definitions for GMCP Server
  */
 
-import type { gmail_v1 } from 'googleapis';
+import type { gmail_v1 } from "googleapis";
 
 /**
  * OAuth2 credentials from Google Console (Desktop Application)
@@ -56,18 +56,25 @@ export interface GmailSearchResult {
 }
 
 /**
+ * Default Gmail scope (readonly access)
+ */
+const DEFAULT_GMAIL_SCOPE = "https://www.googleapis.com/auth/gmail.readonly";
+
+/**
  * Gmail scope mapping (short name to full URL)
  */
 export const GMAIL_SCOPE_MAP: Record<string, string> = {
-  'gmail.readonly': 'https://www.googleapis.com/auth/gmail.readonly',
-  'gmail.modify': 'https://www.googleapis.com/auth/gmail.modify',
-  'gmail.send': 'https://www.googleapis.com/auth/gmail.send',
-  'gmail.labels': 'https://www.googleapis.com/auth/gmail.labels',
-  'gmail.metadata': 'https://www.googleapis.com/auth/gmail.metadata',
-  'gmail.compose': 'https://www.googleapis.com/auth/gmail.compose',
-  'gmail.insert': 'https://www.googleapis.com/auth/gmail.insert',
-  'gmail.settings.basic': 'https://www.googleapis.com/auth/gmail.settings.basic',
-  'gmail.settings.sharing': 'https://www.googleapis.com/auth/gmail.settings.sharing',
+  "gmail.readonly": DEFAULT_GMAIL_SCOPE,
+  "gmail.modify": "https://www.googleapis.com/auth/gmail.modify",
+  "gmail.send": "https://www.googleapis.com/auth/gmail.send",
+  "gmail.labels": "https://www.googleapis.com/auth/gmail.labels",
+  "gmail.metadata": "https://www.googleapis.com/auth/gmail.metadata",
+  "gmail.compose": "https://www.googleapis.com/auth/gmail.compose",
+  "gmail.insert": "https://www.googleapis.com/auth/gmail.insert",
+  "gmail.settings.basic":
+    "https://www.googleapis.com/auth/gmail.settings.basic",
+  "gmail.settings.sharing":
+    "https://www.googleapis.com/auth/gmail.settings.sharing",
 };
 
 /**
@@ -76,10 +83,10 @@ export const GMAIL_SCOPE_MAP: Record<string, string> = {
  */
 export function parseScopes(scopesEnv?: string): string[] {
   if (!scopesEnv) {
-    return [GMAIL_SCOPE_MAP['gmail.readonly']!]; // Default to readonly
+    return [DEFAULT_GMAIL_SCOPE];
   }
 
-  return scopesEnv.split(',').map(scope => {
+  return scopesEnv.split(",").map((scope) => {
     const trimmed = scope.trim();
     // If it's a short name, map it
     if (GMAIL_SCOPE_MAP[trimmed]) {
@@ -93,8 +100,15 @@ export function parseScopes(scopesEnv?: string): string[] {
 /**
  * Extract email header value
  */
-export function getHeader(headers: gmail_v1.Schema$MessagePartHeader[] | undefined, name: string): string {
-  if (!headers) return '';
-  const header = headers.find(h => h.name?.toLowerCase() === name.toLowerCase());
-  return header?.value || '';
+export function getHeader(
+  headers: gmail_v1.Schema$MessagePartHeader[] | undefined,
+  name: string
+): string {
+  if (!headers) {
+    return "";
+  }
+  const header = headers.find(
+    (h) => h.name?.toLowerCase() === name.toLowerCase()
+  );
+  return header?.value || "";
 }

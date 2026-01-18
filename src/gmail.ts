@@ -2,20 +2,20 @@
  * Gmail API wrapper for MCP Server
  */
 
-import { google } from 'googleapis';
-import type { OAuth2Client } from 'google-auth-library';
-import type { gmail_v1 } from 'googleapis';
-import type { EmailMessage, GmailSearchResult } from './types.ts';
-import { getHeader } from './types.ts';
+import type { OAuth2Client } from "google-auth-library";
+import type { gmail_v1 } from "googleapis";
+import { google } from "googleapis";
+import type { EmailMessage, GmailSearchResult } from "./types.ts";
+import { getHeader } from "./types.ts";
 
 /**
  * Gmail API client wrapper
  */
 export class GmailClient {
-  private gmail: gmail_v1.Gmail;
+  private readonly gmail: gmail_v1.Gmail;
 
   constructor(auth: OAuth2Client) {
-    this.gmail = google.gmail({ version: 'v1', auth });
+    this.gmail = google.gmail({ version: "v1", auth });
   }
 
   /**
@@ -27,14 +27,14 @@ export class GmailClient {
    */
   async searchEmails(
     query: string,
-    maxResults: number = 10,
-    includeBody: boolean = false,
+    maxResults = 10,
+    includeBody = false,
     pageToken?: string
   ): Promise<GmailSearchResult> {
     try {
       // Search for messages
       const listResponse = await this.gmail.users.messages.list({
-        userId: 'me',
+        userId: "me",
         q: query,
         maxResults,
         pageToken,
@@ -48,13 +48,17 @@ export class GmailClient {
       const emails: EmailMessage[] = [];
 
       for (const message of messages) {
-        if (!message.id) continue;
+        if (!message.id) {
+          continue;
+        }
 
         const details = await this.gmail.users.messages.get({
-          userId: 'me',
+          userId: "me",
           id: message.id,
-          format: includeBody ? 'full' : 'metadata',
-          metadataHeaders: includeBody ? undefined : ['From', 'To', 'Subject', 'Date'],
+          format: includeBody ? "full" : "metadata",
+          metadataHeaders: includeBody
+            ? undefined
+            : ["From", "To", "Subject", "Date"],
         });
 
         const email = this.parseMessage(details.data, includeBody);
@@ -75,22 +79,25 @@ export class GmailClient {
   /**
    * Parse Gmail message into EmailMessage structure
    */
-  private parseMessage(message: gmail_v1.Schema$Message, includeBody: boolean): EmailMessage {
+  private parseMessage(
+    message: gmail_v1.Schema$Message,
+    includeBody: boolean
+  ): EmailMessage {
     const headers = message.payload?.headers || [];
 
-    const subject = getHeader(headers, 'Subject');
-    const from = getHeader(headers, 'From');
-    const to = getHeader(headers, 'To');
-    const date = getHeader(headers, 'Date');
+    const subject = getHeader(headers, "Subject");
+    const from = getHeader(headers, "From");
+    const to = getHeader(headers, "To");
+    const date = getHeader(headers, "Date");
 
     const email: EmailMessage = {
-      id: message.id || '',
-      threadId: message.threadId || '',
-      subject: subject || '(no subject)',
-      from: from || '(unknown)',
-      to: to || '(unknown)',
-      date: date || '',
-      snippet: message.snippet || '',
+      id: message.id || "",
+      threadId: message.threadId || "",
+      subject: subject || "(no subject)",
+      from: from || "(unknown)",
+      to: to || "(unknown)",
+      date: date || "",
+      snippet: message.snippet || "",
       labels: message.labelIds || undefined,
     };
 
@@ -104,15 +111,19 @@ export class GmailClient {
   /**
    * Extract email body from message payload
    */
-  private extractBody(payload: gmail_v1.Schema$MessagePart | undefined): string {
-    if (!payload) return '';
+  private extractBody(
+    payload: gmail_v1.Schema$MessagePart | undefined
+  ): string {
+    if (!payload) {
+      return "";
+    }
 
     // Try to get text/plain first
-    let body = this.getPartBody(payload, 'text/plain');
+    let body = this.getPartBody(payload, "text/plain");
 
     // Fallback to text/html if no plain text
     if (!body) {
-      body = this.getPartBody(payload, 'text/html');
+      body = this.getPartBody(payload, "text/html");
     }
 
     // If still no body, try the payload body directly
@@ -120,13 +131,16 @@ export class GmailClient {
       body = this.decodeBase64(payload.body.data);
     }
 
-    return body || '(no body)';
+    return body || "(no body)";
   }
 
   /**
    * Get body of a specific MIME type from message parts
    */
-  private getPartBody(part: gmail_v1.Schema$MessagePart, mimeType: string): string {
+  private getPartBody(
+    part: gmail_v1.Schema$MessagePart,
+    mimeType: string
+  ): string {
     if (part.mimeType === mimeType && part.body?.data) {
       return this.decodeBase64(part.body.data);
     }
@@ -134,11 +148,13 @@ export class GmailClient {
     if (part.parts) {
       for (const subPart of part.parts) {
         const body = this.getPartBody(subPart, mimeType);
-        if (body) return body;
+        if (body) {
+          return body;
+        }
       }
     }
 
-    return '';
+    return "";
   }
 
   /**
@@ -147,23 +163,28 @@ export class GmailClient {
   private decodeBase64(data: string): string {
     try {
       // Gmail uses base64url encoding (- and _ instead of + and /)
-      const base64 = data.replace(/-/g, '+').replace(/_/g, '/');
-      return Buffer.from(base64, 'base64').toString('utf-8');
-    } catch (error) {
-      return '(error decoding body)';
+      const base64 = data.replace(/-/g, "+").replace(/_/g, "/");
+      return Buffer.from(base64, "base64").toString("utf-8");
+    } catch (_error) {
+      return "(error decoding body)";
     }
   }
 
   /**
    * Get a single message by ID
    */
-  async getMessage(messageId: string, includeBody: boolean = false): Promise<EmailMessage> {
+  async getMessage(
+    messageId: string,
+    includeBody = false
+  ): Promise<EmailMessage> {
     try {
       const response = await this.gmail.users.messages.get({
-        userId: 'me',
+        userId: "me",
         id: messageId,
-        format: includeBody ? 'full' : 'metadata',
-        metadataHeaders: includeBody ? undefined : ['From', 'To', 'Subject', 'Date'],
+        format: includeBody ? "full" : "metadata",
+        metadataHeaders: includeBody
+          ? undefined
+          : ["From", "To", "Subject", "Date"],
       });
 
       return this.parseMessage(response.data, includeBody);

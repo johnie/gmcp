@@ -1,16 +1,18 @@
 /**
- * OAuth2 authentication module for Gmail MCP Server
+ * OAuth2 authentication module for GMCP Server
  */
 
-import { google } from 'googleapis';
-import type { OAuth2Client } from 'google-auth-library';
-import type { OAuth2Credentials, StoredTokens } from './types.ts';
-import { parseScopes } from './types.ts';
+import type { OAuth2Client } from "google-auth-library";
+import { google } from "googleapis";
+import type { OAuth2Credentials, StoredTokens } from "./types.ts";
+import { parseScopes } from "./types.ts";
 
 /**
  * Load OAuth2 credentials from file
  */
-export async function loadCredentials(path: string): Promise<OAuth2Credentials> {
+export async function loadCredentials(
+  path: string
+): Promise<OAuth2Credentials> {
   try {
     const file = Bun.file(path);
     const content = await file.text();
@@ -41,7 +43,10 @@ export async function loadTokens(path: string): Promise<StoredTokens | null> {
 /**
  * Save tokens to file
  */
-export async function saveTokens(path: string, tokens: StoredTokens): Promise<void> {
+export async function saveTokens(
+  path: string,
+  tokens: StoredTokens
+): Promise<void> {
   try {
     await Bun.write(path, JSON.stringify(tokens, null, 2));
   } catch (error) {
@@ -52,7 +57,9 @@ export async function saveTokens(path: string, tokens: StoredTokens): Promise<vo
 /**
  * Create OAuth2 client from credentials
  */
-export function createOAuth2Client(credentials: OAuth2Credentials): OAuth2Client {
+export function createOAuth2Client(
+  credentials: OAuth2Credentials
+): OAuth2Client {
   const { client_id, client_secret, redirect_uris } = credentials.installed;
   return new google.auth.OAuth2(client_id, client_secret, redirect_uris[0]);
 }
@@ -60,29 +67,35 @@ export function createOAuth2Client(credentials: OAuth2Credentials): OAuth2Client
 /**
  * Generate authorization URL
  */
-export function getAuthUrl(oauth2Client: OAuth2Client, scopes: string[]): string {
+export function getAuthUrl(
+  oauth2Client: OAuth2Client,
+  scopes: string[]
+): string {
   return oauth2Client.generateAuthUrl({
-    access_type: 'offline',
+    access_type: "offline",
     scope: scopes,
-    prompt: 'consent', // Force consent to ensure we get refresh_token
+    prompt: "consent", // Force consent to ensure we get refresh_token
   });
 }
 
 /**
  * Exchange authorization code for tokens
  */
-export async function getTokensFromCode(oauth2Client: OAuth2Client, code: string): Promise<StoredTokens> {
+export async function getTokensFromCode(
+  oauth2Client: OAuth2Client,
+  code: string
+): Promise<StoredTokens> {
   const { tokens } = await oauth2Client.getToken(code);
 
-  if (!tokens.access_token || !tokens.refresh_token) {
-    throw new Error('Failed to obtain access_token or refresh_token');
+  if (!(tokens.access_token && tokens.refresh_token)) {
+    throw new Error("Failed to obtain access_token or refresh_token");
   }
 
   return {
     access_token: tokens.access_token,
     refresh_token: tokens.refresh_token,
-    scope: tokens.scope || '',
-    token_type: tokens.token_type || 'Bearer',
+    scope: tokens.scope || "",
+    token_type: tokens.token_type || "Bearer",
     expiry_date: tokens.expiry_date || Date.now() + 3600 * 1000,
   };
 }
@@ -110,8 +123,8 @@ export async function createAuthenticatedClient(
   oauth2Client.setCredentials(tokens);
 
   // Set up token refresh handler
-  oauth2Client.on('tokens', async (newTokens) => {
-    console.error('Tokens refreshed');
+  oauth2Client.on("tokens", async (newTokens) => {
+    console.error("Tokens refreshed");
     const updatedTokens: StoredTokens = {
       ...tokens,
       access_token: newTokens.access_token || tokens.access_token,
@@ -135,11 +148,11 @@ export function getEnvConfig() {
   const scopesEnv = process.env.GMAIL_SCOPES;
 
   if (!credentialsPath) {
-    throw new Error('GMAIL_CREDENTIALS_PATH environment variable is required');
+    throw new Error("GMAIL_CREDENTIALS_PATH environment variable is required");
   }
 
   if (!tokenPath) {
-    throw new Error('GMAIL_TOKEN_PATH environment variable is required');
+    throw new Error("GMAIL_TOKEN_PATH environment variable is required");
   }
 
   const scopes = parseScopes(scopesEnv);
