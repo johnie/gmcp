@@ -1,50 +1,49 @@
-# GMCP Server
+# GMCP
 
-Model Context Protocol (MCP) server for Gmail API with OAuth2 authentication. Enables LLMs to search and interact with Gmail messages for Google Workspace accounts.
+MCP (Model Context Protocol) server for Google services. Currently supports Gmail with 10 tools for email management. More Google services coming soon.
 
-## Features
+Built with Bun and TypeScript.
 
-- **OAuth2 Desktop Client Authentication**: Secure OAuth2 flow for desktop applications
-- **Configurable Scopes**: Easily define Gmail API scopes via environment variables
-- **Stdio Transport**: Standard MCP stdio transport for seamless integration
-- **Gmail Search**: Search emails using Gmail's powerful query syntax
-- **Docker Support**: Build and run as a Docker container
-- **Built with Bun**: Fast TypeScript runtime with zero-config
+## Gmail Tools
 
-## Prerequisites
+| Tool | Description |
+|------|-------------|
+| `gmcp_gmail_search_emails` | Search emails using Gmail query syntax |
+| `gmcp_gmail_get_email` | Get single email by message ID |
+| `gmcp_gmail_get_thread` | Get entire conversation thread |
+| `gmcp_gmail_list_attachments` | List all attachments on a message |
+| `gmcp_gmail_get_attachment` | Download attachment data by ID |
+| `gmcp_gmail_modify_labels` | Add/remove labels on a message |
+| `gmcp_gmail_batch_modify` | Batch label operations on multiple messages |
+| `gmcp_gmail_send_email` | Send email (preview + confirm safety) |
+| `gmcp_gmail_reply` | Reply to email in thread (preview + confirm) |
+| `gmcp_gmail_create_draft` | Create draft message |
+
+## Setup
+
+### Prerequisites
 
 1. **Google Cloud Project** with Gmail API enabled
 2. **OAuth 2.0 Client ID** (Desktop Application type)
-   - Go to [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
-   - Create OAuth 2.0 Client ID → Desktop Application
+   - Create at [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
    - Download credentials JSON file
 
-## Quick Start
-
-### 1. Installation
+### Install & Configure
 
 ```bash
-# Clone or navigate to the project
-cd gmcp
-
 # Install dependencies
 bun install
 
 # Copy environment template
 cp .env.example .env
+
+# Edit .env with your paths
+# GMAIL_CREDENTIALS_PATH=/path/to/credentials.json
+# GMAIL_TOKEN_PATH=/path/to/token.json
+# GMAIL_SCOPES=gmail.readonly
 ```
 
-### 2. Configuration
-
-Edit `.env` file:
-
-```bash
-GMAIL_CREDENTIALS_PATH=/path/to/credentials.json
-GMAIL_TOKEN_PATH=/path/to/token.json
-GMAIL_SCOPES=gmail.readonly
-```
-
-### 3. Authentication
+### Authenticate
 
 Run the OAuth flow to obtain tokens:
 
@@ -52,116 +51,80 @@ Run the OAuth flow to obtain tokens:
 bun run auth
 ```
 
-This will:
-1. Display an authorization URL
-2. Visit the URL in your browser and authorize the app
-3. After authorizing, you'll be redirected to `localhost` (which shows "connection refused" - **this is expected!**)
-4. Copy the authorization code from the URL in your browser's address bar
-   - The URL looks like: `http://localhost:PORT/?code=YOUR_CODE&scope=...`
-   - Copy the entire string after `code=` (before `&scope`)
-5. Paste the code into the terminal
-6. Tokens will be saved to `GMAIL_TOKEN_PATH`
+Follow the prompts:
+1. Visit the authorization URL in your browser
+2. Authorize the app
+3. Copy the authorization code from the redirected URL
+4. Paste it in the terminal
 
-### 4. Run the Server
+The browser will show "connection refused" after authorization - **this is expected**. Just copy the `code=` parameter from the URL.
+
+### Run the Server
 
 ```bash
 bun run start
 ```
 
-The server will start and listen for MCP requests via stdio.
+The server runs via stdio and is ready to accept MCP requests.
 
-## Gmail Scopes
+## Configuration
 
-Configure scopes in `.env` using short names (comma-separated):
+### Environment Variables
 
-| Short Name | Full URL | Description |
-|------------|----------|-------------|
-| `gmail.readonly` | `https://www.googleapis.com/auth/gmail.readonly` | Read-only access |
-| `gmail.modify` | `https://www.googleapis.com/auth/gmail.modify` | Read, create, update, delete |
-| `gmail.send` | `https://www.googleapis.com/auth/gmail.send` | Send messages |
-| `gmail.labels` | `https://www.googleapis.com/auth/gmail.labels` | Manage labels |
-| `gmail.metadata` | `https://www.googleapis.com/auth/gmail.metadata` | Read metadata only |
-| `gmail.compose` | `https://www.googleapis.com/auth/gmail.compose` | Create drafts and send |
-| `gmail.insert` | `https://www.googleapis.com/auth/gmail.insert` | Insert messages |
-| `gmail.settings.basic` | `https://www.googleapis.com/auth/gmail.settings.basic` | Manage basic settings |
-| `gmail.settings.sharing` | `https://www.googleapis.com/auth/gmail.settings.sharing` | Manage sharing settings |
+| Variable | Description |
+|----------|-------------|
+| `GMAIL_CREDENTIALS_PATH` | Path to OAuth2 credentials JSON from Google Cloud Console |
+| `GMAIL_TOKEN_PATH` | Path where OAuth2 tokens will be stored |
+| `GMAIL_SCOPES` | Comma-separated Gmail API scopes (short names or full URLs) |
+
+### Gmail Scopes
+
+| Short Name | Description | Required For |
+|------------|-------------|--------------|
+| `gmail.readonly` | Read-only access | Search, get email, get thread, list/get attachments |
+| `gmail.modify` | Read, create, update, delete | Label operations |
+| `gmail.send` | Send messages | Send email, reply |
+| `gmail.compose` | Create drafts and send | Send email, reply, create draft |
+| `gmail.labels` | Manage labels | Label operations |
 
 **Examples**:
 ```bash
 # Read-only (default)
 GMAIL_SCOPES=gmail.readonly
 
-# Read and modify
-GMAIL_SCOPES=gmail.readonly,gmail.modify
-
-# Send emails only
-GMAIL_SCOPES=gmail.send
+# Read and send
+GMAIL_SCOPES=gmail.readonly,gmail.send
 
 # Full access
-GMAIL_SCOPES=gmail.readonly,gmail.modify,gmail.send,gmail.labels
+GMAIL_SCOPES=gmail.readonly,gmail.modify,gmail.send
 ```
 
-## MCP Tools
+## Claude Desktop Integration
 
-### `gmail_search_emails`
+Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_desktop_config.json` on macOS):
 
-Search for emails using Gmail's search syntax.
-
-**Parameters**:
-- `query` (string, required): Gmail search query
-- `max_results` (number, optional): Maximum results (1-100, default: 10)
-- `include_body` (boolean, optional): Include full email body (default: false)
-- `page_token` (string, optional): Token for pagination
-
-**Gmail Search Operators**:
-- `from:user@example.com` - Emails from sender
-- `to:user@example.com` - Emails to recipient
-- `subject:keyword` - Subject contains keyword
-- `is:unread` - Unread emails
-- `is:starred` - Starred emails
-- `has:attachment` - Has attachments
-- `after:2024/01/01` - After date
-- `before:2024/12/31` - Before date
-- `label:labelname` - With label
-- `filename:pdf` - Specific file type
-- `larger:5M` - Larger than size
-- `newer_than:7d` - Newer than duration
-
-**Example Queries**:
 ```json
 {
-  "query": "is:unread"
-}
-
-{
-  "query": "from:boss@company.com subject:urgent",
-  "max_results": 20
-}
-
-{
-  "query": "has:attachment newer_than:7d",
-  "include_body": true
+  "mcpServers": {
+    "gmcp": {
+      "command": "bun",
+      "args": ["run", "/path/to/gmcp/src/index.ts"],
+      "env": {
+        "GMAIL_CREDENTIALS_PATH": "/path/to/credentials.json",
+        "GMAIL_TOKEN_PATH": "/path/to/token.json",
+        "GMAIL_SCOPES": "gmail.readonly,gmail.send"
+      }
+    }
+  }
 }
 ```
 
-**Returns**:
-- `total_estimate`: Approximate total matches
-- `count`: Number of results in response
-- `has_more`: Whether more results available
-- `next_page_token`: Token for next page (if applicable)
-- `emails`: Array of email objects
+## Docker
 
-## Docker Usage
-
-### Build Image
+Run with Docker:
 
 ```bash
 docker build -t gmcp-server .
-```
-
-### Run with Docker
-
-```bash
 docker run -i \
   -v /path/to/credentials.json:/app/data/credentials.json:ro \
   -v /path/to/token.json:/app/data/token.json \
@@ -171,98 +134,17 @@ docker run -i \
   gmcp-server
 ```
 
-### Docker Compose
+## Testing
 
-Create `docker-compose.yml`:
-
-```yaml
-version: '3.8'
-services:
-  gmcp:
-    build: .
-    stdin_open: true
-    volumes:
-      - ./credentials.json:/app/data/credentials.json:ro
-      - ./token.json:/app/data/token.json
-    environment:
-      - GMAIL_CREDENTIALS_PATH=/app/data/credentials.json
-      - GMAIL_TOKEN_PATH=/app/data/token.json
-      - GMAIL_SCOPES=gmail.readonly
-```
-
-## Testing with MCP Inspector
+Test with MCP Inspector:
 
 ```bash
 bunx @modelcontextprotocol/inspector bun run start
 ```
 
-## Development
+## Roadmap
 
-```bash
-# Install dependencies
-bun install
-
-# Run server
-bun run start
-
-# Run auth CLI
-bun run auth
-```
-
-## Project Structure
-
-```
-gmcp/
-├── src/
-│   ├── index.ts          # MCP server entry point
-│   ├── auth.ts           # OAuth2 authentication module
-│   ├── auth-cli.ts       # OAuth CLI tool
-│   ├── gmail.ts          # Gmail API wrapper
-│   ├── tools/
-│   │   └── search.ts     # gmail_search_emails tool
-│   └── types.ts          # TypeScript interfaces
-├── Dockerfile
-├── package.json
-├── tsconfig.json
-└── .env.example
-```
-
-## Troubleshooting
-
-### "This site can't be reached" / "localhost refused to connect"
-
-This is **expected behavior** during OAuth authentication! When Google redirects you after authorization, the browser tries to connect to `localhost`, but there's no server running to catch it.
-
-**Solution**: Don't worry about the error. Instead:
-1. Look at the URL in your browser's address bar
-2. Find the `code=` parameter in the URL
-3. Copy the entire authorization code (the long string after `code=`)
-4. Paste it into the terminal where `bun run auth` is waiting
-
-Example URL:
-```
-http://localhost:9999/?code=4/0AY0e-g7xXXXXXX&scope=https://www.googleapis.com/auth/gmail.readonly
-```
-Copy: `4/0AY0e-g7xXXXXXX`
-
-### "No tokens found" Error
-
-Run `bun run auth` to complete the OAuth flow and generate tokens.
-
-### "Invalid grant" Error
-
-Your tokens may have expired or been revoked. Run `bun run auth` again to re-authenticate.
-
-### "Insufficient Permission" Error
-
-The requested operation requires additional scopes. Update `GMAIL_SCOPES` in `.env` and re-authenticate with `bun run auth`.
-
-## Security Notes
-
-- Never commit `credentials.json` or `token.json` to version control
-- Store credentials securely
-- Use read-only scopes unless write access is required
-- Regularly review authorized applications in [Google Account Settings](https://myaccount.google.com/permissions)
+Currently supports Gmail. More Google services (Calendar, Drive, Sheets, etc.) planned for future releases.
 
 ## License
 
