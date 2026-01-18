@@ -156,7 +156,7 @@ Search for emails using Gmail's search syntax.
 ### Build Image
 
 ```bash
-docker build -t gmail-mcp-server .
+docker build -t gmcp-server .
 ```
 
 ### Run with Docker
@@ -168,7 +168,7 @@ docker run -i \
   -e GMAIL_CREDENTIALS_PATH=/app/data/credentials.json \
   -e GMAIL_TOKEN_PATH=/app/data/token.json \
   -e GMAIL_SCOPES=gmail.readonly \
-  gmail-mcp-server
+  gmcp-server
 ```
 
 ### Docker Compose
@@ -178,7 +178,7 @@ Create `docker-compose.yml`:
 ```yaml
 version: '3.8'
 services:
-  gmail-mcp:
+  gmcp:
     build: .
     stdin_open: true
     volumes:
