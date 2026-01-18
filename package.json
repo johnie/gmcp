@@ -14,11 +14,13 @@
     "@googleapis/gmail": "^9.0.1",
     "@modelcontextprotocol/sdk": "^1.6.1",
     "googleapis": "^144.0.0",
+    "json2md": "^2.0.3",
     "zod": "^3.24.1"
   },
   "devDependencies": {
     "@biomejs/biome": "2.3.11",
     "@types/bun": "latest",
+    "@types/json2md": "^1.5.4",
     "lefthook": "^2.0.15",
     "ultracite": "7.0.11"
   },

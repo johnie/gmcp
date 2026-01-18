@@ -4,6 +4,7 @@
 
 import { z } from "zod";
 import type { GmailClient } from "@/gmail.ts";
+import { searchResultsToMarkdown } from "@/utils/markdown.ts";
 
 /**
  * Input schema for gmail_search_emails tool
@@ -30,6 +31,10 @@ export const SearchEmailsInputSchema = z.object({
     .string()
     .optional()
     .describe("Token for pagination to fetch next page of results"),
+  output_format: z
+    .enum(["markdown", "json"])
+    .default("markdown")
+    .describe("Output format: markdown (default) or json"),
 });
 
 export type SearchEmailsInput = z.infer<typeof SearchEmailsInputSchema>;
@@ -62,55 +67,6 @@ function formatEmailForOutput(email: {
 }
 
 /**
- * Generate markdown for a single email
- */
-function generateEmailMarkdown(email: {
-  id: string;
-  threadId: string;
-  subject: string;
-  from: string;
-  to: string;
-  date: string;
-  snippet: string;
-  body?: string;
-  labels?: string[];
-}): string[] {
-  const lines: string[] = [];
-
-  lines.push(`## ${email.subject}`);
-  lines.push(`- **From**: ${email.from}`);
-  lines.push(`- **To**: ${email.to}`);
-  lines.push(`- **Date**: ${email.date}`);
-  lines.push(`- **ID**: ${email.id}`);
-  lines.push(`- **Thread ID**: ${email.threadId}`);
-
-  if (email.labels && email.labels.length > 0) {
-    lines.push(`- **Labels**: ${email.labels.join(", ")}`);
-  }
-
-  lines.push("");
-  lines.push(`**Snippet**: ${email.snippet}`);
-
-  if (email.body) {
-    lines.push("");
-    lines.push("**Body**:");
-    lines.push("```");
-    const bodyPreview =
-      email.body.length > 500
-        ? `${email.body.substring(0, 500)}...`
-        : email.body;
-    lines.push(bodyPreview);
-    lines.push("```");
-  }
-
-  lines.push("");
-  lines.push("---");
-  lines.push("");
-
-  return lines;
-}
-
-/**
  * Gmail search emails tool implementation
  */
 export async function searchEmailsTool(
@@ -136,30 +92,11 @@ export async function searchEmailsTool(
       emails: result.emails.map(formatEmailForOutput),
     };
 
-    // Format as markdown for readability
-    const lines: string[] = [
-      `# Gmail Search Results: "${params.query}"`,
-      "",
-      `Found approximately ${result.total_estimate} emails (showing ${result.emails.length})`,
-      "",
-    ];
-
-    if (result.emails.length === 0) {
-      lines.push("No emails found matching the query.");
-    } else {
-      for (const email of result.emails) {
-        lines.push(...generateEmailMarkdown(email));
-      }
-
-      if (result.has_more) {
-        lines.push("");
-        lines.push(
-          `**Note**: More results available. Use page_token: "${result.next_page_token}" to fetch the next page.`
-        );
-      }
-    }
-
-    const textContent = lines.join("\n");
+    // Generate text content based on output format
+    const textContent =
+      params.output_format === "json"
+        ? JSON.stringify(output, null, 2)
+        : searchResultsToMarkdown(params.query, output);
 
     return {
       content: [{ type: "text" as const, text: textContent }],
@@ -188,7 +125,8 @@ This tool allows you to search through your Gmail messages using the same query 
 
 **Gmail Search Operators**:
 - \`from:user@example.com\` - emails from specific sender
-- \`to:user@example.com\` - emails to specific recipient  - \`subject:keyword\` - emails with keyword in subject
+- \`to:user@example.com\` - emails to specific recipient
+- \`subject:keyword\` - emails with keyword in subject
 - \`is:unread\` - unread emails
 - \`is:starred\` - starred emails
 - \`has:attachment\` - emails with attachments
@@ -208,6 +146,7 @@ This tool allows you to search through your Gmail messages using the same query 
 - \`max_results\` (number, optional): Max emails to return (1-100, default: 10)
 - \`include_body\` (boolean, optional): Include full email body (default: false, only snippet)
 - \`page_token\` (string, optional): Pagination token for next page
+- \`output_format\` (string, optional): Output format: "markdown" (default) or "json"
 
 **Returns**:
 - \`total_estimate\`: Approximate total matching emails
@@ -221,6 +160,7 @@ This tool allows you to search through your Gmail messages using the same query 
 - Search by sender: \`{ "query": "from:alerts@service.com" }\`
 - Recent attachments: \`{ "query": "has:attachment newer_than:7d" }\`
 - With body: \`{ "query": "subject:invoice", "include_body": true }\`
+- JSON output: \`{ "query": "is:unread", "output_format": "json" }\`
 
 **Error Handling**:
 - Returns error message if authentication fails
