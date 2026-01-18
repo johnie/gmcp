@@ -32,7 +32,6 @@ export class GmailClient {
     pageToken?: string
   ): Promise<GmailSearchResult> {
     try {
-      // Search for messages
       const listResponse = await this.gmail.users.messages.list({
         userId: "me",
         q: query,
@@ -44,7 +43,6 @@ export class GmailClient {
       const resultSizeEstimate = listResponse.data.resultSizeEstimate || 0;
       const nextPageToken = listResponse.data.nextPageToken;
 
-      // Fetch details for each message
       const emails: EmailMessage[] = [];
 
       for (const message of messages) {
@@ -118,15 +116,12 @@ export class GmailClient {
       return "";
     }
 
-    // Try to get text/plain first
     let body = this.getPartBody(payload, "text/plain");
 
-    // Fallback to text/html if no plain text
     if (!body) {
       body = this.getPartBody(payload, "text/html");
     }
 
-    // If still no body, try the payload body directly
     if (!body && payload.body?.data) {
       body = this.decodeBase64(payload.body.data);
     }
@@ -162,7 +157,6 @@ export class GmailClient {
    */
   private decodeBase64(data: string): string {
     try {
-      // Gmail uses base64url encoding (- and _ instead of + and /)
       const base64 = data.replace(/-/g, "+").replace(/_/g, "/");
       return Buffer.from(base64, "base64").toString("utf-8");
     } catch (_error) {

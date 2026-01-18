@@ -74,7 +74,7 @@ export function getAuthUrl(
   return oauth2Client.generateAuthUrl({
     access_type: "offline",
     scope: scopes,
-    prompt: "consent", // Force consent to ensure we get refresh_token
+    prompt: "consent",
   });
 }
 
@@ -107,11 +107,9 @@ export async function createAuthenticatedClient(
   credentialsPath: string,
   tokenPath: string
 ): Promise<OAuth2Client> {
-  // Load credentials
   const credentials = await loadCredentials(credentialsPath);
   const oauth2Client = createOAuth2Client(credentials);
 
-  // Load tokens
   const tokens = await loadTokens(tokenPath);
   if (!tokens) {
     throw new Error(
@@ -119,10 +117,8 @@ export async function createAuthenticatedClient(
     );
   }
 
-  // Set credentials
   oauth2Client.setCredentials(tokens);
 
-  // Set up token refresh handler
   oauth2Client.on("tokens", async (newTokens) => {
     console.error("Tokens refreshed");
     const updatedTokens: StoredTokens = {

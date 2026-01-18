@@ -81,7 +81,6 @@ export async function searchEmailsTool(
       params.page_token
     );
 
-    // Format output
     const output = {
       total_estimate: result.total_estimate,
       count: result.emails.length,
@@ -92,7 +91,6 @@ export async function searchEmailsTool(
       emails: result.emails.map(formatEmailForOutput),
     };
 
-    // Generate text content based on output format
     const textContent =
       params.output_format === "json"
         ? JSON.stringify(output, null, 2)

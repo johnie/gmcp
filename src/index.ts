@@ -44,7 +44,7 @@ async function main() {
 
   // Create MCP server
   const server = new McpServer({
-    name: "gmail-mcp-server",
+    name: "gmcp-server",
     version: "1.0.0",
   });
 

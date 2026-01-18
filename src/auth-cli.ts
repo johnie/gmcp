@@ -67,7 +67,6 @@ async function main() {
     const chunk = decoder.decode(value);
     code += chunk;
 
-    // Check if we have a complete line
     if (code.includes("\n")) {
       code = code.trim();
       break;
