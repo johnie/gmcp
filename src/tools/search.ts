@@ -3,7 +3,7 @@
  */
 
 import { z } from "zod";
-import type { GmailClient } from "../gmail.ts";
+import type { GmailClient } from "@/gmail.ts";
 
 /**
  * Input schema for gmail_search_emails tool

@@ -11,7 +11,7 @@ import {
   getTokensFromCode,
   loadCredentials,
   saveTokens,
-} from "./auth.ts";
+} from "@/auth.ts";
 
 async function main() {
   console.log("GMCP Server - OAuth2 Authentication\n");

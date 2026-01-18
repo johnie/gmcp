@@ -4,8 +4,8 @@
 
 import type { OAuth2Client } from "google-auth-library";
 import { google } from "googleapis";
-import type { OAuth2Credentials, StoredTokens } from "./types.ts";
-import { parseScopes } from "./types.ts";
+import type { OAuth2Credentials, StoredTokens } from "@/types.ts";
+import { parseScopes } from "@/types.ts";
 
 /**
  * Load OAuth2 credentials from file

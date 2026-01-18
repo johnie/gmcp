@@ -5,8 +5,8 @@
 import type { OAuth2Client } from "google-auth-library";
 import type { gmail_v1 } from "googleapis";
 import { google } from "googleapis";
-import type { EmailMessage, GmailSearchResult } from "./types.ts";
-import { getHeader } from "./types.ts";
+import type { EmailMessage, GmailSearchResult } from "@/types.ts";
+import { getHeader } from "@/types.ts";
 
 /**
  * Gmail API client wrapper

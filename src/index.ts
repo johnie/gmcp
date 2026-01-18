@@ -8,14 +8,14 @@
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { createAuthenticatedClient, getEnvConfig } from "./auth.ts";
-import { GmailClient } from "./gmail.ts";
+import { createAuthenticatedClient, getEnvConfig } from "@/auth.ts";
+import { GmailClient } from "@/gmail.ts";
 import {
   SEARCH_EMAILS_DESCRIPTION,
   type SearchEmailsInput,
   SearchEmailsInputSchema,
   searchEmailsTool,
-} from "./tools/search.ts";
+} from "@/tools/search.ts";
 
 /**
  * Main server initialization
