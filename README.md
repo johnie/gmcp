@@ -2,8 +2,6 @@
 
 MCP (Model Context Protocol) server for Google services. Currently supports Gmail with 10 tools for email management. More Google services coming soon.
 
-Built with Bun and TypeScript.
-
 ## Gmail Tools
 
 | Tool | Description |
