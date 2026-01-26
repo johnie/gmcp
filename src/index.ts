@@ -11,62 +11,58 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { createAuthenticatedClient, getEnvConfig } from "@/auth.ts";
 import { GmailClient } from "@/gmail.ts";
 import {
+  MODIFY_ANNOTATIONS,
+  READ_ONLY_ANNOTATIONS,
+  registerTools,
+  SEND_ANNOTATIONS,
+} from "@/tool-registry.ts";
+import {
   BATCH_MODIFY_DESCRIPTION,
-  type BatchModifyInput,
   BatchModifyInputSchema,
   batchModifyTool,
 } from "@/tools/batch-modify.ts";
 import {
   CREATE_DRAFT_DESCRIPTION,
-  type CreateDraftInput,
   CreateDraftInputSchema,
   createDraftTool,
 } from "@/tools/create-draft.ts";
 import {
   GET_ATTACHMENT_DESCRIPTION,
-  type GetAttachmentInput,
   GetAttachmentInputSchema,
   getAttachmentTool,
 } from "@/tools/get-attachment.ts";
 import {
   GET_EMAIL_DESCRIPTION,
-  type GetEmailInput,
   GetEmailInputSchema,
   getEmailTool,
 } from "@/tools/get-email.ts";
 import {
   GET_THREAD_DESCRIPTION,
-  type GetThreadInput,
   GetThreadInputSchema,
   getThreadTool,
 } from "@/tools/get-thread.ts";
 import {
   LIST_ATTACHMENTS_DESCRIPTION,
-  type ListAttachmentsInput,
   ListAttachmentsInputSchema,
   listAttachmentsTool,
 } from "@/tools/list-attachments.ts";
 import {
   MODIFY_LABELS_DESCRIPTION,
-  type ModifyLabelsInput,
   ModifyLabelsInputSchema,
   modifyLabelsTool,
 } from "@/tools/modify-labels.ts";
 import {
   REPLY_DESCRIPTION,
-  type ReplyInput,
   ReplyInputSchema,
   replyTool,
 } from "@/tools/reply.ts";
 import {
   SEARCH_EMAILS_DESCRIPTION,
-  type SearchEmailsInput,
   SearchEmailsInputSchema,
   searchEmailsTool,
 } from "@/tools/search.ts";
 import {
   SEND_EMAIL_DESCRIPTION,
-  type SendEmailInput,
   SendEmailInputSchema,
   sendEmailTool,
 } from "@/tools/send-email.ts";
@@ -98,187 +94,92 @@ async function main() {
     version: "1.0.0",
   });
 
-  server.registerTool(
-    "gmcp_gmail_search_emails",
+  const tools = [
     {
+      name: "gmcp_gmail_search_emails",
       title: "Search Gmail Emails",
       description: SEARCH_EMAILS_DESCRIPTION,
       inputSchema: SearchEmailsInputSchema,
-      annotations: {
-        readOnlyHint: true,
-        destructiveHint: false,
-        idempotentHint: true,
-        openWorldHint: true,
-      },
+      annotations: READ_ONLY_ANNOTATIONS,
+      handler: searchEmailsTool,
     },
-    async (params: SearchEmailsInput) => {
-      return await searchEmailsTool(gmailClient, params);
-    }
-  );
-
-  server.registerTool(
-    "gmcp_gmail_get_email",
     {
+      name: "gmcp_gmail_get_email",
       title: "Get Gmail Email",
       description: GET_EMAIL_DESCRIPTION,
       inputSchema: GetEmailInputSchema,
-      annotations: {
-        readOnlyHint: true,
-        destructiveHint: false,
-        idempotentHint: true,
-        openWorldHint: true,
-      },
+      annotations: READ_ONLY_ANNOTATIONS,
+      handler: getEmailTool,
     },
-    async (params: GetEmailInput) => {
-      return await getEmailTool(gmailClient, params);
-    }
-  );
-
-  server.registerTool(
-    "gmcp_gmail_get_thread",
     {
+      name: "gmcp_gmail_get_thread",
       title: "Get Gmail Thread",
       description: GET_THREAD_DESCRIPTION,
       inputSchema: GetThreadInputSchema,
-      annotations: {
-        readOnlyHint: true,
-        destructiveHint: false,
-        idempotentHint: true,
-        openWorldHint: true,
-      },
+      annotations: READ_ONLY_ANNOTATIONS,
+      handler: getThreadTool,
     },
-    async (params: GetThreadInput) => {
-      return await getThreadTool(gmailClient, params);
-    }
-  );
-
-  server.registerTool(
-    "gmcp_gmail_list_attachments",
     {
+      name: "gmcp_gmail_list_attachments",
       title: "List Gmail Attachments",
       description: LIST_ATTACHMENTS_DESCRIPTION,
       inputSchema: ListAttachmentsInputSchema,
-      annotations: {
-        readOnlyHint: true,
-        destructiveHint: false,
-        idempotentHint: true,
-        openWorldHint: true,
-      },
+      annotations: READ_ONLY_ANNOTATIONS,
+      handler: listAttachmentsTool,
     },
-    async (params: ListAttachmentsInput) => {
-      return await listAttachmentsTool(gmailClient, params);
-    }
-  );
-
-  server.registerTool(
-    "gmcp_gmail_get_attachment",
     {
+      name: "gmcp_gmail_get_attachment",
       title: "Get Gmail Attachment",
       description: GET_ATTACHMENT_DESCRIPTION,
       inputSchema: GetAttachmentInputSchema,
-      annotations: {
-        readOnlyHint: true,
-        destructiveHint: false,
-        idempotentHint: true,
-        openWorldHint: true,
-      },
+      annotations: READ_ONLY_ANNOTATIONS,
+      handler: getAttachmentTool,
     },
-    async (params: GetAttachmentInput) => {
-      return await getAttachmentTool(gmailClient, params);
-    }
-  );
-
-  server.registerTool(
-    "gmcp_gmail_modify_labels",
     {
+      name: "gmcp_gmail_modify_labels",
       title: "Modify Gmail Labels",
       description: MODIFY_LABELS_DESCRIPTION,
       inputSchema: ModifyLabelsInputSchema,
-      annotations: {
-        readOnlyHint: false,
-        destructiveHint: false,
-        idempotentHint: true,
-        openWorldHint: false,
-      },
+      annotations: MODIFY_ANNOTATIONS,
+      handler: modifyLabelsTool,
     },
-    async (params: ModifyLabelsInput) => {
-      return await modifyLabelsTool(gmailClient, params);
-    }
-  );
-
-  server.registerTool(
-    "gmcp_gmail_batch_modify",
     {
+      name: "gmcp_gmail_batch_modify",
       title: "Batch Modify Gmail Labels",
       description: BATCH_MODIFY_DESCRIPTION,
       inputSchema: BatchModifyInputSchema,
-      annotations: {
-        readOnlyHint: false,
-        destructiveHint: false,
-        idempotentHint: true,
-        openWorldHint: false,
-      },
+      annotations: MODIFY_ANNOTATIONS,
+      handler: batchModifyTool,
     },
-    async (params: BatchModifyInput) => {
-      return await batchModifyTool(gmailClient, params);
-    }
-  );
-
-  server.registerTool(
-    "gmcp_gmail_send_email",
     {
+      name: "gmcp_gmail_send_email",
       title: "Send Gmail Email",
       description: SEND_EMAIL_DESCRIPTION,
       inputSchema: SendEmailInputSchema,
-      annotations: {
-        readOnlyHint: false,
-        destructiveHint: false,
-        idempotentHint: false,
-        openWorldHint: false,
-      },
+      annotations: SEND_ANNOTATIONS,
+      handler: sendEmailTool,
     },
-    async (params: SendEmailInput) => {
-      return await sendEmailTool(gmailClient, params);
-    }
-  );
-
-  server.registerTool(
-    "gmcp_gmail_reply",
     {
+      name: "gmcp_gmail_reply",
       title: "Reply to Gmail Email",
       description: REPLY_DESCRIPTION,
       inputSchema: ReplyInputSchema,
-      annotations: {
-        readOnlyHint: false,
-        destructiveHint: false,
-        idempotentHint: false,
-        openWorldHint: false,
-      },
+      annotations: SEND_ANNOTATIONS,
+      handler: replyTool,
     },
-    async (params: ReplyInput) => {
-      return await replyTool(gmailClient, params);
-    }
-  );
-
-  server.registerTool(
-    "gmcp_gmail_create_draft",
     {
+      name: "gmcp_gmail_create_draft",
       title: "Create Gmail Draft",
       description: CREATE_DRAFT_DESCRIPTION,
       inputSchema: CreateDraftInputSchema,
-      annotations: {
-        readOnlyHint: false,
-        destructiveHint: false,
-        idempotentHint: false,
-        openWorldHint: false,
-      },
+      annotations: SEND_ANNOTATIONS,
+      handler: createDraftTool,
     },
-    async (params: CreateDraftInput) => {
-      return await createDraftTool(gmailClient, params);
-    }
-  );
+  ];
 
-  console.error("Tools registered (10 total)");
+  registerTools(server, gmailClient, tools);
+
+  console.error(`Tools registered (${tools.length} total)`);
 
   const transport = new StdioServerTransport();
   await server.connect(transport);

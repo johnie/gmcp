@@ -48,24 +48,34 @@ export class GmailClient {
       const resultSizeEstimate = listResponse.data.resultSizeEstimate || 0;
       const nextPageToken = listResponse.data.nextPageToken;
 
+      // Filter out messages without IDs
+      const validMessages = messages.filter((message) => message.id);
+
+      // Batch fetch messages with concurrency limit (10 at a time) for rate limiting
+      const batchSize = 10;
       const emails: EmailMessage[] = [];
 
-      for (const message of messages) {
-        if (!message.id) {
-          continue;
-        }
+      for (let i = 0; i < validMessages.length; i += batchSize) {
+        const batch = validMessages.slice(i, i + batchSize);
 
-        const details = await this.gmail.users.messages.get({
-          userId: "me",
-          id: message.id,
-          format: includeBody ? "full" : "metadata",
-          metadataHeaders: includeBody
-            ? undefined
-            : ["From", "To", "Subject", "Date"],
-        });
+        const batchEmails = await Promise.all(
+          batch.map(async (message) => {
+            // Message ID is guaranteed to exist due to filter above
+            const messageId = message.id ?? "";
+            const details = await this.gmail.users.messages.get({
+              userId: "me",
+              id: messageId,
+              format: includeBody ? "full" : "metadata",
+              metadataHeaders: includeBody
+                ? undefined
+                : ["From", "To", "Subject", "Date"],
+            });
 
-        const email = this.parseMessage(details.data, includeBody);
-        emails.push(email);
+            return this.parseMessage(details.data, includeBody);
+          })
+        );
+
+        emails.push(...batchEmails);
       }
 
       return {

@@ -5,7 +5,11 @@
 import type { OAuth2Client } from "google-auth-library";
 import { google } from "googleapis";
 import type { OAuth2Credentials, StoredTokens } from "@/types.ts";
-import { parseScopes } from "@/types.ts";
+import {
+  OAuth2CredentialsSchema,
+  parseScopes,
+  StoredTokensSchema,
+} from "@/types.ts";
 
 /**
  * Load OAuth2 credentials from file
@@ -16,7 +20,8 @@ export async function loadCredentials(
   try {
     const file = Bun.file(path);
     const content = await file.text();
-    return JSON.parse(content) as OAuth2Credentials;
+    const parsed = JSON.parse(content);
+    return OAuth2CredentialsSchema.parse(parsed);
   } catch (error) {
     throw new Error(`Failed to load credentials from ${path}: ${error}`);
   }
@@ -33,7 +38,8 @@ export async function loadTokens(path: string): Promise<StoredTokens | null> {
       return null;
     }
     const content = await file.text();
-    return JSON.parse(content) as StoredTokens;
+    const parsed = JSON.parse(content);
+    return StoredTokensSchema.parse(parsed);
   } catch (error) {
     console.error(`Failed to load tokens from ${path}: ${error}`);
     return null;
