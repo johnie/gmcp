@@ -104,6 +104,36 @@ export interface GmailLabel {
 }
 
 /**
+ * Gmail attachment information
+ */
+export interface AttachmentInfo {
+  filename: string;
+  mimeType: string;
+  size: number;
+  attachmentId: string;
+}
+
+/**
+ * Result from sending an email
+ */
+export interface SendResult {
+  id: string;
+  threadId: string;
+  labelIds?: string[];
+}
+
+/**
+ * Result from creating a draft
+ */
+export interface DraftResult {
+  id: string;
+  message: {
+    id: string;
+    threadId: string;
+  };
+}
+
+/**
  * Default Gmail scope (readonly access)
  */
 const DEFAULT_GMAIL_SCOPE = "https://www.googleapis.com/auth/gmail.readonly";

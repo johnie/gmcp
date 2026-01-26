@@ -9,7 +9,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { createAuthenticatedClient, getEnvConfig } from "@/auth.ts";
-import { GmailClient } from "@/gmail.ts";
+import { createGmailClient } from "@/gmail.ts";
 import type { ToolDefinition } from "@/tool-registry.ts";
 import {
   DESTRUCTIVE_ANNOTATIONS,
@@ -112,7 +112,7 @@ async function main() {
     tokenPath
   );
 
-  const gmailClient = new GmailClient(oauth2Client);
+  const gmailClient = createGmailClient(oauth2Client);
 
   console.error("Gmail client initialized");
 
