@@ -21,7 +21,8 @@
     "@types/bun": "latest",
     "@types/json2md": "^1.5.4",
     "lefthook": "^2.0.15",
-    "ultracite": "7.0.12"
+    "ultracite": "7.0.12",
+    "vitest": "^4.0.18"
   },
   "peerDependencies": {
     "typescript": "^5"
