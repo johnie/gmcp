@@ -123,11 +123,15 @@ export async function modifyLabelsTool(
       current_labels: email.labels || [],
     };
 
+    const formattedEmail = formatEmailForOutput(email);
     const textContent =
       params.output_format === "json"
         ? JSON.stringify(output, null, 2)
         : labelModificationToMarkdown(
-            formatEmailForOutput(email),
+            {
+              ...formattedEmail,
+              labels: email.labels || [],
+            },
             params.add_labels,
             params.remove_labels
           );

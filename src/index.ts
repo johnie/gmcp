@@ -10,6 +10,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { createAuthenticatedClient, getEnvConfig } from "@/auth.ts";
 import { GmailClient } from "@/gmail.ts";
+import type { ToolDefinition } from "@/tool-registry.ts";
 import {
   DESTRUCTIVE_ANNOTATIONS,
   MODIFY_ANNOTATIONS,
@@ -241,7 +242,7 @@ async function main() {
       annotations: DESTRUCTIVE_ANNOTATIONS,
       handler: deleteLabelTool,
     },
-  ];
+  ] as ToolDefinition<unknown>[];
 
   registerTools(server, gmailClient, tools);
 
