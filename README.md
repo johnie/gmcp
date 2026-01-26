@@ -1,8 +1,10 @@
 # GMCP
 
-MCP (Model Context Protocol) server for Google services. Currently supports Gmail with 10 tools for email management. More Google services coming soon.
+MCP (Model Context Protocol) server for Google services. Currently supports Gmail with 15 tools for email management. More Google services coming soon.
 
 ## Gmail Tools
+
+### Email Operations
 
 | Tool | Description |
 |------|-------------|
@@ -11,11 +13,21 @@ MCP (Model Context Protocol) server for Google services. Currently supports Gmai
 | `gmcp_gmail_get_thread` | Get entire conversation thread |
 | `gmcp_gmail_list_attachments` | List all attachments on a message |
 | `gmcp_gmail_get_attachment` | Download attachment data by ID |
-| `gmcp_gmail_modify_labels` | Add/remove labels on a message |
-| `gmcp_gmail_batch_modify` | Batch label operations on multiple messages |
 | `gmcp_gmail_send_email` | Send email (preview + confirm safety) |
 | `gmcp_gmail_reply` | Reply to email in thread (preview + confirm) |
 | `gmcp_gmail_create_draft` | Create draft message |
+
+### Label Management
+
+| Tool | Description |
+|------|-------------|
+| `gmcp_gmail_list_labels` | List all Gmail labels (system + custom) |
+| `gmcp_gmail_get_label` | Get label details and message counts |
+| `gmcp_gmail_create_label` | Create custom label with visibility/color settings |
+| `gmcp_gmail_update_label` | Update label name, visibility, or color |
+| `gmcp_gmail_delete_label` | Delete custom label (system labels protected) |
+| `gmcp_gmail_modify_labels` | Add/remove labels on a message |
+| `gmcp_gmail_batch_modify` | Batch label operations on multiple messages |
 
 ## Setup
 
@@ -79,11 +91,11 @@ The server runs via stdio and is ready to accept MCP requests.
 
 | Short Name | Description | Required For |
 |------------|-------------|--------------|
-| `gmail.readonly` | Read-only access | Search, get email, get thread, list/get attachments |
-| `gmail.modify` | Read, create, update, delete | Label operations |
+| `gmail.readonly` | Read-only access | Search, get email, get thread, list/get attachments, list labels, get label |
+| `gmail.modify` | Read, create, update, delete | Modify labels, batch modify |
+| `gmail.labels` | Manage labels | Create label, update label, delete label, modify labels, batch modify |
 | `gmail.send` | Send messages | Send email, reply |
 | `gmail.compose` | Create drafts and send | Send email, reply, create draft |
-| `gmail.labels` | Manage labels | Label operations |
 
 **Examples**:
 ```bash
@@ -93,8 +105,11 @@ GMAIL_SCOPES=gmail.readonly
 # Read and send
 GMAIL_SCOPES=gmail.readonly,gmail.send
 
-# Full access
-GMAIL_SCOPES=gmail.readonly,gmail.modify,gmail.send
+# Read, send, and manage labels
+GMAIL_SCOPES=gmail.readonly,gmail.send,gmail.labels
+
+# Full access (all tools)
+GMAIL_SCOPES=gmail.readonly,gmail.modify,gmail.send,gmail.labels
 ```
 
 ## Claude Desktop Integration
@@ -110,7 +125,7 @@ Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_
       "env": {
         "GMAIL_CREDENTIALS_PATH": "/path/to/credentials.json",
         "GMAIL_TOKEN_PATH": "/path/to/token.json",
-        "GMAIL_SCOPES": "gmail.readonly,gmail.send"
+        "GMAIL_SCOPES": "gmail.readonly,gmail.send,gmail.labels"
       }
     }
   }
@@ -128,7 +143,7 @@ docker run -i \
   -v /path/to/token.json:/app/data/token.json \
   -e GMAIL_CREDENTIALS_PATH=/app/data/credentials.json \
   -e GMAIL_TOKEN_PATH=/app/data/token.json \
-  -e GMAIL_SCOPES=gmail.readonly \
+  -e GMAIL_SCOPES=gmail.readonly,gmail.labels,gmail.send \
   gmcp-server
 ```
 
