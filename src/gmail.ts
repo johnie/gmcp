@@ -106,8 +106,9 @@ export interface GmailClient {
 
 /**
  * Decode base64url string
+ * Exported for testing
  */
-function decodeBase64(data: string): string {
+export function decodeBase64(data: string): string {
   try {
     const base64 = data.replace(/-/g, "+").replace(/_/g, "/");
     return Buffer.from(base64, "base64").toString("utf-8");
@@ -118,8 +119,9 @@ function decodeBase64(data: string): string {
 
 /**
  * Get body of a specific MIME type from message parts
+ * Exported for testing
  */
-function getPartBody(
+export function getPartBody(
   part: gmail_v1.Schema$MessagePart,
   mimeType: string
 ): string {
@@ -141,8 +143,11 @@ function getPartBody(
 
 /**
  * Extract email body from message payload
+ * Exported for testing
  */
-function extractBody(payload: gmail_v1.Schema$MessagePart | undefined): string {
+export function extractBody(
+  payload: gmail_v1.Schema$MessagePart | undefined
+): string {
   if (!payload) {
     return "";
   }
@@ -162,8 +167,9 @@ function extractBody(payload: gmail_v1.Schema$MessagePart | undefined): string {
 
 /**
  * Parse Gmail message into EmailMessage structure
+ * Exported for testing
  */
-function parseMessage(
+export function parseMessage(
   message: gmail_v1.Schema$Message,
   includeBody: boolean
 ): EmailMessage {
@@ -194,8 +200,9 @@ function parseMessage(
 
 /**
  * Create a MIME message
+ * Exported for testing
  */
-function createMimeMessage(params: {
+export function createMimeMessage(params: {
   to: string;
   subject: string;
   body: string;
@@ -230,8 +237,9 @@ function createMimeMessage(params: {
 
 /**
  * Encode message for Gmail API
+ * Exported for testing
  */
-function encodeMessage(message: string): string {
+export function encodeMessage(message: string): string {
   return Buffer.from(message)
     .toString("base64")
     .replace(/\+/g, "-")
@@ -241,8 +249,9 @@ function encodeMessage(message: string): string {
 
 /**
  * Parse Gmail API label response into GmailLabel structure
+ * Exported for testing
  */
-function parseLabel(label: gmail_v1.Schema$Label): GmailLabel {
+export function parseLabel(label: gmail_v1.Schema$Label): GmailLabel {
   return {
     id: label.id || "",
     name: label.name || "",
