@@ -5,7 +5,7 @@
 import type { OAuth2Client } from "google-auth-library";
 import type { gmail_v1 } from "googleapis";
 import { google } from "googleapis";
-import type { EmailMessage, GmailSearchResult } from "@/types.ts";
+import type { EmailMessage, GmailLabel, GmailSearchResult } from "@/types.ts";
 import { getHeader } from "@/types.ts";
 
 /**
@@ -528,6 +528,34 @@ export class GmailClient {
   }
 
   /**
+   * Parse Gmail API label response into GmailLabel structure
+   */
+  private parseLabel(label: gmail_v1.Schema$Label): GmailLabel {
+    return {
+      id: label.id || "",
+      name: label.name || "",
+      type: label.type === "system" ? "system" : "user",
+      messageListVisibility: label.messageListVisibility as
+        | "show"
+        | "hide"
+        | undefined,
+      labelListVisibility: label.labelListVisibility as
+        | "labelShow"
+        | "labelShowIfUnread"
+        | "labelHide"
+        | undefined,
+      messagesTotal: label.messagesTotal || undefined,
+      messagesUnread: label.messagesUnread || undefined,
+      color: label.color
+        ? {
+            textColor: label.color.textColor || "",
+            backgroundColor: label.color.backgroundColor || "",
+          }
+        : undefined,
+    };
+  }
+
+  /**
    * List all labels (system and user-created)
    */
   async listLabels(): Promise<GmailLabel[]> {
@@ -537,28 +565,7 @@ export class GmailClient {
       });
 
       const labels = response.data.labels || [];
-      return labels.map((label) => ({
-        id: label.id || "",
-        name: label.name || "",
-        type: label.type === "system" ? "system" : "user",
-        messageListVisibility: label.messageListVisibility as
-          | "show"
-          | "hide"
-          | undefined,
-        labelListVisibility: label.labelListVisibility as
-          | "labelShow"
-          | "labelShowIfUnread"
-          | "labelHide"
-          | undefined,
-        messagesTotal: label.messagesTotal || undefined,
-        messagesUnread: label.messagesUnread || undefined,
-        color: label.color
-          ? {
-              textColor: label.color.textColor || "",
-              backgroundColor: label.color.backgroundColor || "",
-            }
-          : undefined,
-      }));
+      return labels.map((label) => this.parseLabel(label));
     } catch (error) {
       throw new Error(`Failed to list labels: ${error}`);
     }
@@ -574,29 +581,7 @@ export class GmailClient {
         id: labelId,
       });
 
-      const label = response.data;
-      return {
-        id: label.id || "",
-        name: label.name || "",
-        type: label.type === "system" ? "system" : "user",
-        messageListVisibility: label.messageListVisibility as
-          | "show"
-          | "hide"
-          | undefined,
-        labelListVisibility: label.labelListVisibility as
-          | "labelShow"
-          | "labelShowIfUnread"
-          | "labelHide"
-          | undefined,
-        messagesTotal: label.messagesTotal || undefined,
-        messagesUnread: label.messagesUnread || undefined,
-        color: label.color
-          ? {
-              textColor: label.color.textColor || "",
-              backgroundColor: label.color.backgroundColor || "",
-            }
-          : undefined,
-      };
+      return this.parseLabel(response.data);
     } catch (error) {
       throw new Error(`Failed to get label ${labelId}: ${error}`);
     }
@@ -626,29 +611,7 @@ export class GmailClient {
         },
       });
 
-      const label = response.data;
-      return {
-        id: label.id || "",
-        name: label.name || "",
-        type: label.type === "system" ? "system" : "user",
-        messageListVisibility: label.messageListVisibility as
-          | "show"
-          | "hide"
-          | undefined,
-        labelListVisibility: label.labelListVisibility as
-          | "labelShow"
-          | "labelShowIfUnread"
-          | "labelHide"
-          | undefined,
-        messagesTotal: label.messagesTotal || undefined,
-        messagesUnread: label.messagesUnread || undefined,
-        color: label.color
-          ? {
-              textColor: label.color.textColor || "",
-              backgroundColor: label.color.backgroundColor || "",
-            }
-          : undefined,
-      };
+      return this.parseLabel(response.data);
     } catch (error) {
       throw new Error(`Failed to create label: ${error}`);
     }
@@ -681,29 +644,7 @@ export class GmailClient {
         },
       });
 
-      const label = response.data;
-      return {
-        id: label.id || "",
-        name: label.name || "",
-        type: label.type === "system" ? "system" : "user",
-        messageListVisibility: label.messageListVisibility as
-          | "show"
-          | "hide"
-          | undefined,
-        labelListVisibility: label.labelListVisibility as
-          | "labelShow"
-          | "labelShowIfUnread"
-          | "labelHide"
-          | undefined,
-        messagesTotal: label.messagesTotal || undefined,
-        messagesUnread: label.messagesUnread || undefined,
-        color: label.color
-          ? {
-              textColor: label.color.textColor || "",
-              backgroundColor: label.color.backgroundColor || "",
-            }
-          : undefined,
-      };
+      return this.parseLabel(response.data);
     } catch (error) {
       throw new Error(`Failed to update label ${labelId}: ${error}`);
     }
