@@ -55,6 +55,16 @@ export const SEND_ANNOTATIONS = {
 } as const;
 
 /**
+ * Annotation constants for destructive tools
+ */
+export const DESTRUCTIVE_ANNOTATIONS = {
+  readOnlyHint: false,
+  destructiveHint: true,
+  idempotentHint: true,
+  openWorldHint: false,
+} as const;
+
+/**
  * Register multiple tools with the MCP server
  */
 export function registerTools(
