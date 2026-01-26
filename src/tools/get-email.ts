@@ -5,6 +5,10 @@
 import json2md from "json2md";
 import { z } from "zod";
 import type { GmailClient } from "@/gmail.ts";
+import {
+  createErrorResponse,
+  formatEmailForOutput,
+} from "@/utils/tool-helpers.ts";
 
 /**
  * Input schema for gmail_get_email tool
@@ -25,33 +29,6 @@ export const GetEmailInputSchema = z.object({
 });
 
 export type GetEmailInput = z.infer<typeof GetEmailInputSchema>;
-
-/**
- * Format email for structured output
- */
-function formatEmailForOutput(email: {
-  id: string;
-  threadId: string;
-  subject: string;
-  from: string;
-  to: string;
-  date: string;
-  snippet: string;
-  body?: string;
-  labels?: string[];
-}) {
-  return {
-    id: email.id,
-    thread_id: email.threadId,
-    subject: email.subject,
-    from: email.from,
-    to: email.to,
-    date: email.date,
-    snippet: email.snippet,
-    ...(email.body ? { body: email.body } : {}),
-    ...(email.labels ? { labels: email.labels } : {}),
-  };
-}
 
 /**
  * Convert email to markdown format
@@ -122,16 +99,7 @@ export async function getEmailTool(
       structuredContent: output,
     };
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    return {
-      content: [
-        {
-          type: "text" as const,
-          text: `Error getting email: ${errorMessage}`,
-        },
-      ],
-      isError: true,
-    };
+    return createErrorResponse("getting email", error);
   }
 }
 

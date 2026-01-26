@@ -5,6 +5,10 @@
 import { z } from "zod";
 import type { GmailClient } from "@/gmail.ts";
 import { searchResultsToMarkdown } from "@/utils/markdown.ts";
+import {
+  createErrorResponse,
+  formatEmailForOutput,
+} from "@/utils/tool-helpers.ts";
 
 /**
  * Input schema for gmail_search_emails tool
@@ -38,33 +42,6 @@ export const SearchEmailsInputSchema = z.object({
 });
 
 export type SearchEmailsInput = z.infer<typeof SearchEmailsInputSchema>;
-
-/**
- * Format email for structured output
- */
-function formatEmailForOutput(email: {
-  id: string;
-  threadId: string;
-  subject: string;
-  from: string;
-  to: string;
-  date: string;
-  snippet: string;
-  body?: string;
-  labels?: string[];
-}) {
-  return {
-    id: email.id,
-    thread_id: email.threadId,
-    subject: email.subject,
-    from: email.from,
-    to: email.to,
-    date: email.date,
-    snippet: email.snippet,
-    ...(email.body ? { body: email.body } : {}),
-    ...(email.labels ? { labels: email.labels } : {}),
-  };
-}
 
 /**
  * Gmail search emails tool implementation
@@ -101,16 +78,7 @@ export async function searchEmailsTool(
       structuredContent: output,
     };
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    return {
-      content: [
-        {
-          type: "text" as const,
-          text: `Error searching emails: ${errorMessage}`,
-        },
-      ],
-      isError: true,
-    };
+    return createErrorResponse("searching emails", error);
   }
 }
 
