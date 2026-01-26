@@ -3,6 +3,7 @@
  */
 
 import type { gmail_v1 } from "googleapis";
+import { z } from "zod";
 
 /**
  * OAuth2 credentials from Google Console (Desktop Application)
@@ -20,6 +21,25 @@ export interface OAuth2Credentials {
 }
 
 /**
+ * Zod schema for OAuth2 credentials validation
+ */
+export const OAuth2CredentialsSchema = z.object({
+  installed: z.object({
+    client_id: z.string().min(1, "client_id is required"),
+    project_id: z.string().min(1, "project_id is required"),
+    auth_uri: z.string().url("auth_uri must be a valid URL"),
+    token_uri: z.string().url("token_uri must be a valid URL"),
+    auth_provider_x509_cert_url: z
+      .string()
+      .url("auth_provider_x509_cert_url must be a valid URL"),
+    client_secret: z.string().min(1, "client_secret is required"),
+    redirect_uris: z.array(
+      z.string().url("redirect_uris must contain valid URLs")
+    ),
+  }),
+});
+
+/**
  * Stored OAuth2 tokens
  */
 export interface StoredTokens {
@@ -29,6 +49,20 @@ export interface StoredTokens {
   token_type: string;
   expiry_date: number;
 }
+
+/**
+ * Zod schema for stored tokens validation
+ */
+export const StoredTokensSchema = z.object({
+  access_token: z.string().min(1, "access_token is required"),
+  refresh_token: z.string().min(1, "refresh_token is required"),
+  scope: z.string().min(1, "scope is required"),
+  token_type: z.string().min(1, "token_type is required"),
+  expiry_date: z
+    .number()
+    .int()
+    .positive("expiry_date must be a positive integer"),
+});
 
 /**
  * Email message structure for MCP responses
