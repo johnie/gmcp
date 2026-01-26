@@ -4,6 +4,7 @@
 
 import { z } from "zod";
 import type { GmailClient } from "@/gmail.ts";
+import { createErrorResponse } from "@/utils/tool-helpers.ts";
 
 /**
  * Input schema for gmail_get_attachment tool
@@ -58,16 +59,7 @@ export async function getAttachmentTool(
       structuredContent: output,
     };
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    return {
-      content: [
-        {
-          type: "text" as const,
-          text: `Error getting attachment: ${errorMessage}`,
-        },
-      ],
-      isError: true,
-    };
+    return createErrorResponse("getting attachment", error);
   }
 }
 

@@ -5,6 +5,7 @@
 import json2md from "json2md";
 import { z } from "zod";
 import type { GmailClient } from "@/gmail.ts";
+import { createErrorResponse } from "@/utils/tool-helpers.ts";
 
 /**
  * Input schema for gmail_reply tool
@@ -196,16 +197,7 @@ export async function replyTool(gmailClient: GmailClient, params: ReplyInput) {
       structuredContent: output,
     };
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    return {
-      content: [
-        {
-          type: "text" as const,
-          text: `Error sending reply: ${errorMessage}`,
-        },
-      ],
-      isError: true,
-    };
+    return createErrorResponse("sending reply", error);
   }
 }
 

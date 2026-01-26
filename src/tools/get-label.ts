@@ -5,6 +5,7 @@
 import json2md from "json2md";
 import { z } from "zod";
 import type { GmailClient } from "@/gmail.ts";
+import { createErrorResponse } from "@/utils/tool-helpers.ts";
 
 /**
  * Input schema for gmcp_gmail_get_label tool
@@ -104,16 +105,7 @@ export async function getLabelTool(
       structuredContent: output,
     };
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    return {
-      content: [
-        {
-          type: "text" as const,
-          text: `Error getting label: ${errorMessage}`,
-        },
-      ],
-      isError: true,
-    };
+    return createErrorResponse("getting label", error);
   }
 }
 
