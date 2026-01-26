@@ -5,6 +5,7 @@
 import type { OAuth2Client } from "google-auth-library";
 import type { gmail_v1 } from "googleapis";
 import { google } from "googleapis";
+import { EMAIL_FETCH_BATCH_SIZE } from "@/constants.ts";
 import type { EmailMessage, GmailLabel, GmailSearchResult } from "@/types.ts";
 import { getHeader } from "@/types.ts";
 
@@ -51,12 +52,11 @@ export class GmailClient {
       // Filter out messages without IDs
       const validMessages = messages.filter((message) => message.id);
 
-      // Batch fetch messages with concurrency limit (10 at a time) for rate limiting
-      const batchSize = 10;
+      // Batch fetch messages with concurrency limit for rate limiting
       const emails: EmailMessage[] = [];
 
-      for (let i = 0; i < validMessages.length; i += batchSize) {
-        const batch = validMessages.slice(i, i + batchSize);
+      for (let i = 0; i < validMessages.length; i += EMAIL_FETCH_BATCH_SIZE) {
+        const batch = validMessages.slice(i, i + EMAIL_FETCH_BATCH_SIZE);
 
         const batchEmails = await Promise.all(
           batch.map(async (message) => {
@@ -354,35 +354,35 @@ export class GmailClient {
   /**
    * Create a MIME message
    */
-  private createMimeMessage(
-    to: string,
-    subject: string,
-    body: string,
-    contentType: "text/plain" | "text/html",
-    cc?: string,
-    bcc?: string,
-    inReplyTo?: string,
-    references?: string
-  ): string {
+  private createMimeMessage(params: {
+    to: string;
+    subject: string;
+    body: string;
+    contentType: "text/plain" | "text/html";
+    cc?: string;
+    bcc?: string;
+    inReplyTo?: string;
+    references?: string;
+  }): string {
     const lines: string[] = [];
 
-    lines.push(`To: ${to}`);
-    if (cc) {
-      lines.push(`Cc: ${cc}`);
+    lines.push(`To: ${params.to}`);
+    if (params.cc) {
+      lines.push(`Cc: ${params.cc}`);
     }
-    if (bcc) {
-      lines.push(`Bcc: ${bcc}`);
+    if (params.bcc) {
+      lines.push(`Bcc: ${params.bcc}`);
     }
-    lines.push(`Subject: ${subject}`);
-    if (inReplyTo) {
-      lines.push(`In-Reply-To: ${inReplyTo}`);
+    lines.push(`Subject: ${params.subject}`);
+    if (params.inReplyTo) {
+      lines.push(`In-Reply-To: ${params.inReplyTo}`);
     }
-    if (references) {
-      lines.push(`References: ${references}`);
+    if (params.references) {
+      lines.push(`References: ${params.references}`);
     }
-    lines.push(`Content-Type: ${contentType}; charset=utf-8`);
+    lines.push(`Content-Type: ${params.contentType}; charset=utf-8`);
     lines.push("");
-    lines.push(body);
+    lines.push(params.body);
 
     return lines.join("\r\n");
   }
@@ -410,14 +410,14 @@ export class GmailClient {
     bcc?: string
   ): Promise<{ id: string; threadId: string; labelIds?: string[] }> {
     try {
-      const mimeMessage = this.createMimeMessage(
+      const mimeMessage = this.createMimeMessage({
         to,
         subject,
         body,
         contentType,
         cc,
-        bcc
-      );
+        bcc,
+      });
       const encodedMessage = this.encodeMessage(mimeMessage);
 
       const response = await this.gmail.users.messages.send({
@@ -454,16 +454,15 @@ export class GmailClient {
         ? subject
         : `Re: ${subject}`;
 
-      const mimeMessage = this.createMimeMessage(
+      const mimeMessage = this.createMimeMessage({
         to,
-        replySubject,
+        subject: replySubject,
         body,
         contentType,
         cc,
-        undefined,
-        `<${messageId}>`,
-        `<${messageId}>`
-      );
+        inReplyTo: `<${messageId}>`,
+        references: `<${messageId}>`,
+      });
       const encodedMessage = this.encodeMessage(mimeMessage);
 
       const response = await this.gmail.users.messages.send({
@@ -496,14 +495,14 @@ export class GmailClient {
     bcc?: string
   ): Promise<{ id: string; message: { id: string; threadId: string } }> {
     try {
-      const mimeMessage = this.createMimeMessage(
+      const mimeMessage = this.createMimeMessage({
         to,
         subject,
         body,
         contentType,
         cc,
-        bcc
-      );
+        bcc,
+      });
       const encodedMessage = this.encodeMessage(mimeMessage);
 
       const response = await this.gmail.users.drafts.create({
