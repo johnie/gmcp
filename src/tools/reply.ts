@@ -25,7 +25,6 @@ export const ReplyInputSchema = z.object({
       "Content type: text/plain (default) or text/html for HTML replies"
     ),
   cc: z
-    .string()
     .email("CC must be a valid email address")
     .optional()
     .describe("CC (carbon copy) email address"),

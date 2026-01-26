@@ -11,7 +11,6 @@ import type { GmailClient } from "@/gmail.ts";
  */
 export const SendEmailInputSchema = z.object({
   to: z
-    .string()
     .email("Must be a valid email address")
     .describe("Recipient email address"),
   subject: z
@@ -29,12 +28,10 @@ export const SendEmailInputSchema = z.object({
       "Content type: text/plain (default) or text/html for HTML emails"
     ),
   cc: z
-    .string()
     .email("CC must be a valid email address")
     .optional()
     .describe("CC (carbon copy) email address"),
   bcc: z
-    .string()
     .email("BCC must be a valid email address")
     .optional()
     .describe("BCC (blind carbon copy) email address"),
