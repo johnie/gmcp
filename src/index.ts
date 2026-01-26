@@ -11,6 +11,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { createAuthenticatedClient, getEnvConfig } from "@/auth.ts";
 import { GmailClient } from "@/gmail.ts";
 import {
+  DESTRUCTIVE_ANNOTATIONS,
   MODIFY_ANNOTATIONS,
   READ_ONLY_ANNOTATIONS,
   registerTools,
@@ -27,6 +28,16 @@ import {
   createDraftTool,
 } from "@/tools/create-draft.ts";
 import {
+  CREATE_LABEL_DESCRIPTION,
+  CreateLabelInputSchema,
+  createLabelTool,
+} from "@/tools/create-label.ts";
+import {
+  DELETE_LABEL_DESCRIPTION,
+  DeleteLabelInputSchema,
+  deleteLabelTool,
+} from "@/tools/delete-label.ts";
+import {
   GET_ATTACHMENT_DESCRIPTION,
   GetAttachmentInputSchema,
   getAttachmentTool,
@@ -37,6 +48,11 @@ import {
   getEmailTool,
 } from "@/tools/get-email.ts";
 import {
+  GET_LABEL_DESCRIPTION,
+  GetLabelInputSchema,
+  getLabelTool,
+} from "@/tools/get-label.ts";
+import {
   GET_THREAD_DESCRIPTION,
   GetThreadInputSchema,
   getThreadTool,
@@ -46,6 +62,11 @@ import {
   ListAttachmentsInputSchema,
   listAttachmentsTool,
 } from "@/tools/list-attachments.ts";
+import {
+  LIST_LABELS_DESCRIPTION,
+  ListLabelsInputSchema,
+  listLabelsTool,
+} from "@/tools/list-labels.ts";
 import {
   MODIFY_LABELS_DESCRIPTION,
   ModifyLabelsInputSchema,
@@ -66,6 +87,11 @@ import {
   SendEmailInputSchema,
   sendEmailTool,
 } from "@/tools/send-email.ts";
+import {
+  UPDATE_LABEL_DESCRIPTION,
+  UpdateLabelInputSchema,
+  updateLabelTool,
+} from "@/tools/update-label.ts";
 
 /**
  * Main server initialization
@@ -174,6 +200,46 @@ async function main() {
       inputSchema: CreateDraftInputSchema,
       annotations: SEND_ANNOTATIONS,
       handler: createDraftTool,
+    },
+    {
+      name: "gmcp_gmail_list_labels",
+      title: "List Gmail Labels",
+      description: LIST_LABELS_DESCRIPTION,
+      inputSchema: ListLabelsInputSchema,
+      annotations: READ_ONLY_ANNOTATIONS,
+      handler: listLabelsTool,
+    },
+    {
+      name: "gmcp_gmail_get_label",
+      title: "Get Gmail Label",
+      description: GET_LABEL_DESCRIPTION,
+      inputSchema: GetLabelInputSchema,
+      annotations: READ_ONLY_ANNOTATIONS,
+      handler: getLabelTool,
+    },
+    {
+      name: "gmcp_gmail_create_label",
+      title: "Create Gmail Label",
+      description: CREATE_LABEL_DESCRIPTION,
+      inputSchema: CreateLabelInputSchema,
+      annotations: MODIFY_ANNOTATIONS,
+      handler: createLabelTool,
+    },
+    {
+      name: "gmcp_gmail_update_label",
+      title: "Update Gmail Label",
+      description: UPDATE_LABEL_DESCRIPTION,
+      inputSchema: UpdateLabelInputSchema,
+      annotations: MODIFY_ANNOTATIONS,
+      handler: updateLabelTool,
+    },
+    {
+      name: "gmcp_gmail_delete_label",
+      title: "Delete Gmail Label",
+      description: DELETE_LABEL_DESCRIPTION,
+      inputSchema: DeleteLabelInputSchema,
+      annotations: DESTRUCTIVE_ANNOTATIONS,
+      handler: deleteLabelTool,
     },
   ];
 
