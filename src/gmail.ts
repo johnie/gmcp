@@ -526,4 +526,200 @@ export class GmailClient {
       throw new Error(`Failed to create draft: ${error}`);
     }
   }
+
+  /**
+   * List all labels (system and user-created)
+   */
+  async listLabels(): Promise<GmailLabel[]> {
+    try {
+      const response = await this.gmail.users.labels.list({
+        userId: "me",
+      });
+
+      const labels = response.data.labels || [];
+      return labels.map((label) => ({
+        id: label.id || "",
+        name: label.name || "",
+        type: label.type === "system" ? "system" : "user",
+        messageListVisibility: label.messageListVisibility as
+          | "show"
+          | "hide"
+          | undefined,
+        labelListVisibility: label.labelListVisibility as
+          | "labelShow"
+          | "labelShowIfUnread"
+          | "labelHide"
+          | undefined,
+        messagesTotal: label.messagesTotal || undefined,
+        messagesUnread: label.messagesUnread || undefined,
+        color: label.color
+          ? {
+              textColor: label.color.textColor || "",
+              backgroundColor: label.color.backgroundColor || "",
+            }
+          : undefined,
+      }));
+    } catch (error) {
+      throw new Error(`Failed to list labels: ${error}`);
+    }
+  }
+
+  /**
+   * Get a single label by ID
+   */
+  async getLabel(labelId: string): Promise<GmailLabel> {
+    try {
+      const response = await this.gmail.users.labels.get({
+        userId: "me",
+        id: labelId,
+      });
+
+      const label = response.data;
+      return {
+        id: label.id || "",
+        name: label.name || "",
+        type: label.type === "system" ? "system" : "user",
+        messageListVisibility: label.messageListVisibility as
+          | "show"
+          | "hide"
+          | undefined,
+        labelListVisibility: label.labelListVisibility as
+          | "labelShow"
+          | "labelShowIfUnread"
+          | "labelHide"
+          | undefined,
+        messagesTotal: label.messagesTotal || undefined,
+        messagesUnread: label.messagesUnread || undefined,
+        color: label.color
+          ? {
+              textColor: label.color.textColor || "",
+              backgroundColor: label.color.backgroundColor || "",
+            }
+          : undefined,
+      };
+    } catch (error) {
+      throw new Error(`Failed to get label ${labelId}: ${error}`);
+    }
+  }
+
+  /**
+   * Create a new label
+   */
+  async createLabel(
+    name: string,
+    messageListVisibility?: "show" | "hide",
+    labelListVisibility?: "labelShow" | "labelShowIfUnread" | "labelHide",
+    backgroundColor?: string,
+    textColor?: string
+  ): Promise<GmailLabel> {
+    try {
+      const response = await this.gmail.users.labels.create({
+        userId: "me",
+        requestBody: {
+          name,
+          messageListVisibility,
+          labelListVisibility,
+          color:
+            backgroundColor && textColor
+              ? { backgroundColor, textColor }
+              : undefined,
+        },
+      });
+
+      const label = response.data;
+      return {
+        id: label.id || "",
+        name: label.name || "",
+        type: label.type === "system" ? "system" : "user",
+        messageListVisibility: label.messageListVisibility as
+          | "show"
+          | "hide"
+          | undefined,
+        labelListVisibility: label.labelListVisibility as
+          | "labelShow"
+          | "labelShowIfUnread"
+          | "labelHide"
+          | undefined,
+        messagesTotal: label.messagesTotal || undefined,
+        messagesUnread: label.messagesUnread || undefined,
+        color: label.color
+          ? {
+              textColor: label.color.textColor || "",
+              backgroundColor: label.color.backgroundColor || "",
+            }
+          : undefined,
+      };
+    } catch (error) {
+      throw new Error(`Failed to create label: ${error}`);
+    }
+  }
+
+  /**
+   * Update a label
+   */
+  async updateLabel(
+    labelId: string,
+    name?: string,
+    messageListVisibility?: "show" | "hide",
+    labelListVisibility?: "labelShow" | "labelShowIfUnread" | "labelHide",
+    backgroundColor?: string,
+    textColor?: string
+  ): Promise<GmailLabel> {
+    try {
+      const response = await this.gmail.users.labels.update({
+        userId: "me",
+        id: labelId,
+        requestBody: {
+          id: labelId,
+          name,
+          messageListVisibility,
+          labelListVisibility,
+          color:
+            backgroundColor && textColor
+              ? { backgroundColor, textColor }
+              : undefined,
+        },
+      });
+
+      const label = response.data;
+      return {
+        id: label.id || "",
+        name: label.name || "",
+        type: label.type === "system" ? "system" : "user",
+        messageListVisibility: label.messageListVisibility as
+          | "show"
+          | "hide"
+          | undefined,
+        labelListVisibility: label.labelListVisibility as
+          | "labelShow"
+          | "labelShowIfUnread"
+          | "labelHide"
+          | undefined,
+        messagesTotal: label.messagesTotal || undefined,
+        messagesUnread: label.messagesUnread || undefined,
+        color: label.color
+          ? {
+              textColor: label.color.textColor || "",
+              backgroundColor: label.color.backgroundColor || "",
+            }
+          : undefined,
+      };
+    } catch (error) {
+      throw new Error(`Failed to update label ${labelId}: ${error}`);
+    }
+  }
+
+  /**
+   * Delete a label
+   */
+  async deleteLabel(labelId: string): Promise<void> {
+    try {
+      await this.gmail.users.labels.delete({
+        userId: "me",
+        id: labelId,
+      });
+    } catch (error) {
+      throw new Error(`Failed to delete label ${labelId}: ${error}`);
+    }
+  }
 }

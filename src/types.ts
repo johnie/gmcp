@@ -90,6 +90,20 @@ export interface GmailSearchResult {
 }
 
 /**
+ * Gmail label structure
+ */
+export interface GmailLabel {
+  id: string;
+  name: string;
+  type: "system" | "user";
+  messageListVisibility?: "show" | "hide";
+  labelListVisibility?: "labelShow" | "labelShowIfUnread" | "labelHide";
+  messagesTotal?: number;
+  messagesUnread?: number;
+  color?: { textColor: string; backgroundColor: string };
+}
+
+/**
  * Default Gmail scope (readonly access)
  */
 const DEFAULT_GMAIL_SCOPE = "https://www.googleapis.com/auth/gmail.readonly";
