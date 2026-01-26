@@ -21,3 +21,9 @@ export const MAX_RESULTS_LIMIT = 100;
  * Maximum batch size for batch operations
  */
 export const MAX_BATCH_SIZE = 1000;
+
+/**
+ * Email fetch batch size for rate limiting
+ * Number of emails to fetch concurrently when retrieving search results
+ */
+export const EMAIL_FETCH_BATCH_SIZE = 10;

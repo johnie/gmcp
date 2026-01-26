@@ -5,6 +5,7 @@
 import json2md from "json2md";
 import { z } from "zod";
 import type { GmailClient } from "@/gmail.ts";
+import { createErrorResponse } from "@/utils/tool-helpers.ts";
 
 /**
  * Input schema for gmail_create_draft tool
@@ -115,16 +116,7 @@ export async function createDraftTool(
       structuredContent: output,
     };
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    return {
-      content: [
-        {
-          type: "text" as const,
-          text: `Error creating draft: ${errorMessage}`,
-        },
-      ],
-      isError: true,
-    };
+    return createErrorResponse("creating draft", error);
   }
 }
 

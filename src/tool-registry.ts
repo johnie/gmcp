@@ -10,7 +10,7 @@ import type { ToolResponse } from "@/utils/tool-helpers.ts";
 /**
  * Tool definition structure
  */
-export interface ToolDefinition<TInput> {
+export interface ToolDefinition<TInput = unknown> {
   name: string;
   title: string;
   description: string;

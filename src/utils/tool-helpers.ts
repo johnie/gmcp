@@ -6,8 +6,9 @@
  * MCP tool response type
  */
 export interface ToolResponse {
+  [x: string]: unknown;
   content: Array<{ type: "text"; text: string }>;
-  structuredContent?: unknown;
+  structuredContent?: { [x: string]: unknown };
   isError?: boolean;
 }
 
@@ -62,7 +63,7 @@ export function createErrorResponse(
  */
 export function createSuccessResponse(
   textContent: string,
-  structuredContent?: unknown
+  structuredContent?: { [x: string]: unknown }
 ): ToolResponse {
   return {
     content: [{ type: "text", text: textContent }],

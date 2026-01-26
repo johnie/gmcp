@@ -5,6 +5,10 @@
 import json2md from "json2md";
 import { z } from "zod";
 import type { GmailClient } from "@/gmail.ts";
+import {
+  createErrorResponse,
+  formatEmailForOutput,
+} from "@/utils/tool-helpers.ts";
 
 /**
  * Input schema for gmail_modify_labels tool
@@ -33,32 +37,6 @@ export const ModifyLabelsInputSchema = z.object({
 });
 
 export type ModifyLabelsInput = z.infer<typeof ModifyLabelsInputSchema>;
-
-/**
- * Format email for structured output
- */
-function formatEmailForOutput(email: {
-  id: string;
-  threadId: string;
-  subject: string;
-  from: string;
-  to: string;
-  date: string;
-  snippet: string;
-  body?: string;
-  labels?: string[];
-}) {
-  return {
-    id: email.id,
-    thread_id: email.threadId,
-    subject: email.subject,
-    from: email.from,
-    to: email.to,
-    date: email.date,
-    snippet: email.snippet,
-    labels: email.labels || [],
-  };
-}
 
 /**
  * Convert label modification result to markdown
@@ -145,11 +123,15 @@ export async function modifyLabelsTool(
       current_labels: email.labels || [],
     };
 
+    const formattedEmail = formatEmailForOutput(email);
     const textContent =
       params.output_format === "json"
         ? JSON.stringify(output, null, 2)
         : labelModificationToMarkdown(
-            formatEmailForOutput(email),
+            {
+              ...formattedEmail,
+              labels: email.labels || [],
+            },
             params.add_labels,
             params.remove_labels
           );
@@ -159,16 +141,7 @@ export async function modifyLabelsTool(
       structuredContent: output,
     };
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    return {
-      content: [
-        {
-          type: "text" as const,
-          text: `Error modifying labels: ${errorMessage}`,
-        },
-      ],
-      isError: true,
-    };
+    return createErrorResponse("modifying labels", error);
   }
 }
 

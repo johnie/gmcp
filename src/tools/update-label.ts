@@ -5,6 +5,7 @@
 import json2md from "json2md";
 import { z } from "zod";
 import type { GmailClient } from "@/gmail.ts";
+import { createErrorResponse } from "@/utils/tool-helpers.ts";
 
 /**
  * System labels that cannot be renamed
@@ -229,16 +230,7 @@ export async function updateLabelTool(
       structuredContent: output,
     };
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    return {
-      content: [
-        {
-          type: "text" as const,
-          text: `Error updating label: ${errorMessage}`,
-        },
-      ],
-      isError: true,
-    };
+    return createErrorResponse("updating label", error);
   }
 }
 

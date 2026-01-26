@@ -5,7 +5,8 @@
 import type { OAuth2Client } from "google-auth-library";
 import type { gmail_v1 } from "googleapis";
 import { google } from "googleapis";
-import type { EmailMessage, GmailSearchResult } from "@/types.ts";
+import { EMAIL_FETCH_BATCH_SIZE } from "@/constants.ts";
+import type { EmailMessage, GmailLabel, GmailSearchResult } from "@/types.ts";
 import { getHeader } from "@/types.ts";
 
 /**
@@ -51,12 +52,11 @@ export class GmailClient {
       // Filter out messages without IDs
       const validMessages = messages.filter((message) => message.id);
 
-      // Batch fetch messages with concurrency limit (10 at a time) for rate limiting
-      const batchSize = 10;
+      // Batch fetch messages with concurrency limit for rate limiting
       const emails: EmailMessage[] = [];
 
-      for (let i = 0; i < validMessages.length; i += batchSize) {
-        const batch = validMessages.slice(i, i + batchSize);
+      for (let i = 0; i < validMessages.length; i += EMAIL_FETCH_BATCH_SIZE) {
+        const batch = validMessages.slice(i, i + EMAIL_FETCH_BATCH_SIZE);
 
         const batchEmails = await Promise.all(
           batch.map(async (message) => {
@@ -85,7 +85,9 @@ export class GmailClient {
         next_page_token: nextPageToken || undefined,
       };
     } catch (error) {
-      throw new Error(`Gmail API error: ${error}`);
+      throw new Error(
+        `Failed to search emails with query "${query}": ${error}`
+      );
     }
   }
 
@@ -347,42 +349,44 @@ export class GmailClient {
         },
       });
     } catch (error) {
-      throw new Error(`Failed to batch modify labels: ${error}`);
+      throw new Error(
+        `Failed to batch modify labels on ${messageIds.length} messages: ${error}`
+      );
     }
   }
 
   /**
    * Create a MIME message
    */
-  private createMimeMessage(
-    to: string,
-    subject: string,
-    body: string,
-    contentType: "text/plain" | "text/html",
-    cc?: string,
-    bcc?: string,
-    inReplyTo?: string,
-    references?: string
-  ): string {
+  private createMimeMessage(params: {
+    to: string;
+    subject: string;
+    body: string;
+    contentType: "text/plain" | "text/html";
+    cc?: string;
+    bcc?: string;
+    inReplyTo?: string;
+    references?: string;
+  }): string {
     const lines: string[] = [];
 
-    lines.push(`To: ${to}`);
-    if (cc) {
-      lines.push(`Cc: ${cc}`);
+    lines.push(`To: ${params.to}`);
+    if (params.cc) {
+      lines.push(`Cc: ${params.cc}`);
     }
-    if (bcc) {
-      lines.push(`Bcc: ${bcc}`);
+    if (params.bcc) {
+      lines.push(`Bcc: ${params.bcc}`);
     }
-    lines.push(`Subject: ${subject}`);
-    if (inReplyTo) {
-      lines.push(`In-Reply-To: ${inReplyTo}`);
+    lines.push(`Subject: ${params.subject}`);
+    if (params.inReplyTo) {
+      lines.push(`In-Reply-To: ${params.inReplyTo}`);
     }
-    if (references) {
-      lines.push(`References: ${references}`);
+    if (params.references) {
+      lines.push(`References: ${params.references}`);
     }
-    lines.push(`Content-Type: ${contentType}; charset=utf-8`);
+    lines.push(`Content-Type: ${params.contentType}; charset=utf-8`);
     lines.push("");
-    lines.push(body);
+    lines.push(params.body);
 
     return lines.join("\r\n");
   }
@@ -410,14 +414,14 @@ export class GmailClient {
     bcc?: string
   ): Promise<{ id: string; threadId: string; labelIds?: string[] }> {
     try {
-      const mimeMessage = this.createMimeMessage(
+      const mimeMessage = this.createMimeMessage({
         to,
         subject,
         body,
         contentType,
         cc,
-        bcc
-      );
+        bcc,
+      });
       const encodedMessage = this.encodeMessage(mimeMessage);
 
       const response = await this.gmail.users.messages.send({
@@ -433,7 +437,7 @@ export class GmailClient {
         labelIds: response.data.labelIds || undefined,
       };
     } catch (error) {
-      throw new Error(`Failed to send email: ${error}`);
+      throw new Error(`Failed to send email to ${to}: ${error}`);
     }
   }
 
@@ -454,16 +458,15 @@ export class GmailClient {
         ? subject
         : `Re: ${subject}`;
 
-      const mimeMessage = this.createMimeMessage(
+      const mimeMessage = this.createMimeMessage({
         to,
-        replySubject,
+        subject: replySubject,
         body,
         contentType,
         cc,
-        undefined,
-        `<${messageId}>`,
-        `<${messageId}>`
-      );
+        inReplyTo: `<${messageId}>`,
+        references: `<${messageId}>`,
+      });
       const encodedMessage = this.encodeMessage(mimeMessage);
 
       const response = await this.gmail.users.messages.send({
@@ -480,7 +483,9 @@ export class GmailClient {
         labelIds: response.data.labelIds || undefined,
       };
     } catch (error) {
-      throw new Error(`Failed to reply to email: ${error}`);
+      throw new Error(
+        `Failed to reply to message ${messageId} in thread ${threadId}: ${error}`
+      );
     }
   }
 
@@ -496,14 +501,14 @@ export class GmailClient {
     bcc?: string
   ): Promise<{ id: string; message: { id: string; threadId: string } }> {
     try {
-      const mimeMessage = this.createMimeMessage(
+      const mimeMessage = this.createMimeMessage({
         to,
         subject,
         body,
         contentType,
         cc,
-        bcc
-      );
+        bcc,
+      });
       const encodedMessage = this.encodeMessage(mimeMessage);
 
       const response = await this.gmail.users.drafts.create({
@@ -523,8 +528,36 @@ export class GmailClient {
         },
       };
     } catch (error) {
-      throw new Error(`Failed to create draft: ${error}`);
+      throw new Error(`Failed to create draft to ${to}: ${error}`);
     }
+  }
+
+  /**
+   * Parse Gmail API label response into GmailLabel structure
+   */
+  private parseLabel(label: gmail_v1.Schema$Label): GmailLabel {
+    return {
+      id: label.id || "",
+      name: label.name || "",
+      type: label.type === "system" ? "system" : "user",
+      messageListVisibility: label.messageListVisibility as
+        | "show"
+        | "hide"
+        | undefined,
+      labelListVisibility: label.labelListVisibility as
+        | "labelShow"
+        | "labelShowIfUnread"
+        | "labelHide"
+        | undefined,
+      messagesTotal: label.messagesTotal || undefined,
+      messagesUnread: label.messagesUnread || undefined,
+      color: label.color
+        ? {
+            textColor: label.color.textColor || "",
+            backgroundColor: label.color.backgroundColor || "",
+          }
+        : undefined,
+    };
   }
 
   /**
@@ -537,28 +570,7 @@ export class GmailClient {
       });
 
       const labels = response.data.labels || [];
-      return labels.map((label) => ({
-        id: label.id || "",
-        name: label.name || "",
-        type: label.type === "system" ? "system" : "user",
-        messageListVisibility: label.messageListVisibility as
-          | "show"
-          | "hide"
-          | undefined,
-        labelListVisibility: label.labelListVisibility as
-          | "labelShow"
-          | "labelShowIfUnread"
-          | "labelHide"
-          | undefined,
-        messagesTotal: label.messagesTotal || undefined,
-        messagesUnread: label.messagesUnread || undefined,
-        color: label.color
-          ? {
-              textColor: label.color.textColor || "",
-              backgroundColor: label.color.backgroundColor || "",
-            }
-          : undefined,
-      }));
+      return labels.map((label) => this.parseLabel(label));
     } catch (error) {
       throw new Error(`Failed to list labels: ${error}`);
     }
@@ -574,29 +586,7 @@ export class GmailClient {
         id: labelId,
       });
 
-      const label = response.data;
-      return {
-        id: label.id || "",
-        name: label.name || "",
-        type: label.type === "system" ? "system" : "user",
-        messageListVisibility: label.messageListVisibility as
-          | "show"
-          | "hide"
-          | undefined,
-        labelListVisibility: label.labelListVisibility as
-          | "labelShow"
-          | "labelShowIfUnread"
-          | "labelHide"
-          | undefined,
-        messagesTotal: label.messagesTotal || undefined,
-        messagesUnread: label.messagesUnread || undefined,
-        color: label.color
-          ? {
-              textColor: label.color.textColor || "",
-              backgroundColor: label.color.backgroundColor || "",
-            }
-          : undefined,
-      };
+      return this.parseLabel(response.data);
     } catch (error) {
       throw new Error(`Failed to get label ${labelId}: ${error}`);
     }
@@ -626,31 +616,9 @@ export class GmailClient {
         },
       });
 
-      const label = response.data;
-      return {
-        id: label.id || "",
-        name: label.name || "",
-        type: label.type === "system" ? "system" : "user",
-        messageListVisibility: label.messageListVisibility as
-          | "show"
-          | "hide"
-          | undefined,
-        labelListVisibility: label.labelListVisibility as
-          | "labelShow"
-          | "labelShowIfUnread"
-          | "labelHide"
-          | undefined,
-        messagesTotal: label.messagesTotal || undefined,
-        messagesUnread: label.messagesUnread || undefined,
-        color: label.color
-          ? {
-              textColor: label.color.textColor || "",
-              backgroundColor: label.color.backgroundColor || "",
-            }
-          : undefined,
-      };
+      return this.parseLabel(response.data);
     } catch (error) {
-      throw new Error(`Failed to create label: ${error}`);
+      throw new Error(`Failed to create label "${name}": ${error}`);
     }
   }
 
@@ -681,29 +649,7 @@ export class GmailClient {
         },
       });
 
-      const label = response.data;
-      return {
-        id: label.id || "",
-        name: label.name || "",
-        type: label.type === "system" ? "system" : "user",
-        messageListVisibility: label.messageListVisibility as
-          | "show"
-          | "hide"
-          | undefined,
-        labelListVisibility: label.labelListVisibility as
-          | "labelShow"
-          | "labelShowIfUnread"
-          | "labelHide"
-          | undefined,
-        messagesTotal: label.messagesTotal || undefined,
-        messagesUnread: label.messagesUnread || undefined,
-        color: label.color
-          ? {
-              textColor: label.color.textColor || "",
-              backgroundColor: label.color.backgroundColor || "",
-            }
-          : undefined,
-      };
+      return this.parseLabel(response.data);
     } catch (error) {
       throw new Error(`Failed to update label ${labelId}: ${error}`);
     }

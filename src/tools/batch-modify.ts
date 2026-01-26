@@ -5,6 +5,7 @@
 import json2md from "json2md";
 import { z } from "zod";
 import type { GmailClient } from "@/gmail.ts";
+import { createErrorResponse } from "@/utils/tool-helpers.ts";
 
 /**
  * Input schema for gmail_batch_modify tool
@@ -113,16 +114,7 @@ export async function batchModifyTool(
       structuredContent: output,
     };
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    return {
-      content: [
-        {
-          type: "text" as const,
-          text: `Error batch modifying labels: ${errorMessage}`,
-        },
-      ],
-      isError: true,
-    };
+    return createErrorResponse("batch modifying labels", error);
   }
 }
 
