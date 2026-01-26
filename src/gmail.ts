@@ -85,7 +85,9 @@ export class GmailClient {
         next_page_token: nextPageToken || undefined,
       };
     } catch (error) {
-      throw new Error(`Gmail API error: ${error}`);
+      throw new Error(
+        `Failed to search emails with query "${query}": ${error}`
+      );
     }
   }
 
@@ -347,7 +349,9 @@ export class GmailClient {
         },
       });
     } catch (error) {
-      throw new Error(`Failed to batch modify labels: ${error}`);
+      throw new Error(
+        `Failed to batch modify labels on ${messageIds.length} messages: ${error}`
+      );
     }
   }
 
@@ -433,7 +437,7 @@ export class GmailClient {
         labelIds: response.data.labelIds || undefined,
       };
     } catch (error) {
-      throw new Error(`Failed to send email: ${error}`);
+      throw new Error(`Failed to send email to ${to}: ${error}`);
     }
   }
 
@@ -479,7 +483,9 @@ export class GmailClient {
         labelIds: response.data.labelIds || undefined,
       };
     } catch (error) {
-      throw new Error(`Failed to reply to email: ${error}`);
+      throw new Error(
+        `Failed to reply to message ${messageId} in thread ${threadId}: ${error}`
+      );
     }
   }
 
@@ -522,7 +528,7 @@ export class GmailClient {
         },
       };
     } catch (error) {
-      throw new Error(`Failed to create draft: ${error}`);
+      throw new Error(`Failed to create draft to ${to}: ${error}`);
     }
   }
 
@@ -612,7 +618,7 @@ export class GmailClient {
 
       return this.parseLabel(response.data);
     } catch (error) {
-      throw new Error(`Failed to create label: ${error}`);
+      throw new Error(`Failed to create label "${name}": ${error}`);
     }
   }
 
