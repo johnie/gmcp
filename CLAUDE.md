@@ -4,12 +4,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-GMCP is an MCP (Model Context Protocol) server that provides Gmail API integration with OAuth2 authentication. It enables LLMs to search, read, and interact with Gmail messages through a set of tools exposed via the MCP protocol.
+GMCP is an MCP (Model Context Protocol) server that provides Gmail and Google Calendar API integration with OAuth2 authentication. It enables LLMs to search, read, and interact with Gmail messages and Calendar events through a set of tools exposed via the MCP protocol.
 
 ## Commands
 
 - **Run server**: `bun run start` (starts MCP server via stdio)
-- **Authenticate**: `bun run auth` (OAuth2 flow for Gmail API)
+- **Authenticate**: `bun run auth` (OAuth2 flow for Gmail and Calendar APIs)
 - **Install dependencies**: `bun install`
 - **Format code**: `bun x ultracite fix`
 - **Check for issues**: `bun x ultracite check`
@@ -74,14 +74,14 @@ async function searchEmailsTool(client: GmailClient, params: SearchInput) { ... 
 **Entry Point (`src/index.ts`)**
 - Initializes MCP server with stdio transport
 - Loads OAuth2 credentials and tokens from environment config
-- Creates authenticated Gmail client
-- Registers 10 Gmail tools with their schemas and handlers
+- Creates authenticated Gmail and Calendar clients
+- Registers Gmail tools (15 total) and Calendar tools (4 total) with their schemas and handlers
 
 **Authentication (`src/auth.ts`)**
 - OAuth2 desktop client flow implementation
 - Credential/token file management via Bun.file()
 - Automatic token refresh with persistence
-- Environment-based configuration (GMAIL_CREDENTIALS_PATH, GMAIL_TOKEN_PATH, GMAIL_SCOPES)
+- Environment-based configuration (GOOGLE_CREDENTIALS_PATH, GOOGLE_TOKEN_PATH, GOOGLE_SCOPES)
 
 **Gmail Client (`src/gmail.ts`)**
 - Wrapper around googleapis Gmail v1 API
@@ -89,13 +89,20 @@ async function searchEmailsTool(client: GmailClient, params: SearchInput) { ... 
 - Base64url encoding/decoding for Gmail API payloads
 - MIME message creation for sending/replying
 
+**Calendar Client (`src/calendar.ts`)**
+- Wrapper around googleapis Calendar v3 API
+- Event parsing and formatting (timed and all-day events)
+- RFC3339 timestamp handling
+- Auto-detection of all-day vs timed events
+- Google Meet conference link creation support
+
 **Tool Layer (`src/tools/*.ts`)**
 Each tool exports:
 - Zod input schema for MCP validation
 - Description string for MCP tool documentation
 - Tool handler function that accepts (GmailClient, input) and returns MCP response
 
-Available tools:
+Available Gmail tools:
 - `gmcp_gmail_search_emails` - Search with Gmail query syntax
 - `gmcp_gmail_get_email` - Get single message by ID
 - `gmcp_gmail_get_thread` - Get thread (conversation) by ID
@@ -106,15 +113,34 @@ Available tools:
 - `gmcp_gmail_send_email` - Send new email
 - `gmcp_gmail_reply` - Reply to existing email (maintains thread)
 - `gmcp_gmail_create_draft` - Create draft message
+- `gmcp_gmail_list_labels` - List all labels
+- `gmcp_gmail_get_label` - Get single label by ID
+- `gmcp_gmail_create_label` - Create new label
+- `gmcp_gmail_update_label` - Update existing label
+- `gmcp_gmail_delete_label` - Delete label
+
+Available Calendar tools:
+- `gmcp_calendar_list_calendars` - List all calendars for account
+- `gmcp_calendar_list_events` - List events with filters (time range, query, calendar)
+- `gmcp_calendar_get_event` - Get single event by ID
+- `gmcp_calendar_create_event` - Create new event (supports recurring events, Google Meet)
 
 ### Gmail Scopes
 
-Tools require appropriate Gmail API scopes configured via `GMAIL_SCOPES` environment variable:
+Tools require appropriate Gmail API scopes configured via `GOOGLE_SCOPES` environment variable:
 - Read-only tools: `gmail.readonly`
 - Label modification: `gmail.modify` or `gmail.labels`
 - Sending emails: `gmail.send` or `gmail.compose`
 
-Short scope names (e.g., `gmail.readonly`) are mapped to full URLs in `src/types.ts`.
+### Calendar Scopes
+
+Calendar tools require appropriate Calendar API scopes:
+- Read-only tools: `calendar.readonly` or `calendar.events.readonly`
+- List calendars: `calendar.calendarlist.readonly`
+- Manage calendar subscriptions: `calendar.calendarlist`
+- Create/modify events: `calendar.events` or `calendar` (full access)
+
+Short scope names (e.g., `gmail.readonly`, `calendar.readonly`) are mapped to full URLs in `src/types.ts`.
 
 ### Message Formatting
 
@@ -125,19 +151,28 @@ Tools return markdown-formatted output via `src/utils/markdown.ts` using json2md
 1. Create new tool file in `src/tools/` following existing pattern
 2. Define Zod input schema and export it
 3. Write tool description string explaining functionality
-4. Implement tool handler: `async (client: GmailClient, input: SchemaType) => MCPResponse`
+4. Implement tool handler: `async (client: GmailClient | CalendarClient, input: SchemaType) => MCPResponse`
 5. Register tool in `src/index.ts` with schema, description, and handler
 6. Set appropriate MCP annotations (readOnlyHint, destructiveHint, idempotentHint)
 
+The tool-registry (`src/tool-registry.ts`) is generic and supports both GmailClient and CalendarClient through type parameters.
+
 ## Environment Configuration
 
-Required environment variables:
-- `GMAIL_CREDENTIALS_PATH` - Path to OAuth2 credentials JSON from Google Cloud Console
-- `GMAIL_TOKEN_PATH` - Path to store/load OAuth2 tokens
-- `GMAIL_SCOPES` - Comma-separated Gmail scopes (short names or full URLs)
+Required environment variables (note: renamed from `GMAIL_*` to `GOOGLE_*`):
+- `GOOGLE_CREDENTIALS_PATH` - Path to OAuth2 credentials JSON from Google Cloud Console
+- `GOOGLE_TOKEN_PATH` - Path to store/load OAuth2 tokens
+- `GOOGLE_SCOPES` - Comma-separated scopes for both Gmail and Calendar (short names or full URLs)
+
+Example scopes:
+- Gmail only: `gmail.readonly`
+- Calendar only: `calendar.readonly`
+- Both: `gmail.readonly,calendar.events`
+
+Users must re-authenticate (`bun run auth`) when adding new scopes to existing tokens.
 
 ## Security Notes
 
 - Never commit credentials.json or token.json files
 - Use minimal required scopes for intended functionality
-- Tokens are auto-refreshed and persisted to GMAIL_TOKEN_PATH
+- Tokens are auto-refreshed and persisted to GOOGLE_TOKEN_PATH
