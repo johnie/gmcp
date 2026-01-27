@@ -4,6 +4,7 @@
 
 import type { OAuth2Client } from "google-auth-library";
 import { google } from "googleapis";
+import type { Logger } from "pino";
 import type { OAuth2Credentials, StoredTokens } from "@/types.ts";
 import {
   OAuth2CredentialsSchema,
@@ -30,7 +31,10 @@ export async function loadCredentials(
 /**
  * Load stored tokens from file
  */
-export async function loadTokens(path: string): Promise<StoredTokens | null> {
+export async function loadTokens(
+  path: string,
+  logger?: Logger
+): Promise<StoredTokens | null> {
   try {
     const file = Bun.file(path);
     const exists = await file.exists();
@@ -41,7 +45,15 @@ export async function loadTokens(path: string): Promise<StoredTokens | null> {
     const parsed = JSON.parse(content);
     return StoredTokensSchema.parse(parsed);
   } catch (error) {
-    console.error(`Failed to load tokens from ${path}: ${error}`);
+    logger?.warn(
+      {
+        path,
+        errorType:
+          error instanceof Error ? error.constructor.name : typeof error,
+        error: error instanceof Error ? error.message : String(error),
+      },
+      "Failed to load tokens"
+    );
     return null;
   }
 }
@@ -111,12 +123,13 @@ export async function getTokensFromCode(
  */
 export async function createAuthenticatedClient(
   credentialsPath: string,
-  tokenPath: string
+  tokenPath: string,
+  logger?: Logger
 ): Promise<OAuth2Client> {
   const credentials = await loadCredentials(credentialsPath);
   const oauth2Client = createOAuth2Client(credentials);
 
-  const tokens = await loadTokens(tokenPath);
+  const tokens = await loadTokens(tokenPath, logger);
   if (!tokens) {
     throw new Error(
       `No tokens found at ${tokenPath}. Please run 'bun run auth' to authenticate first.`
@@ -126,7 +139,6 @@ export async function createAuthenticatedClient(
   oauth2Client.setCredentials(tokens);
 
   oauth2Client.on("tokens", async (newTokens) => {
-    console.error("Tokens refreshed");
     const updatedTokens: StoredTokens = {
       ...tokens,
       access_token: newTokens.access_token || tokens.access_token,
@@ -135,6 +147,15 @@ export async function createAuthenticatedClient(
     if (newTokens.refresh_token) {
       updatedTokens.refresh_token = newTokens.refresh_token;
     }
+
+    logger?.info(
+      {
+        expiry_date: updatedTokens.expiry_date,
+        has_refresh_token: !!updatedTokens.refresh_token,
+      },
+      "Tokens refreshed"
+    );
+
     await saveTokens(tokenPath, updatedTokens);
   });
 

@@ -11,6 +11,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { createAuthenticatedClient, getEnvConfig } from "@/auth.ts";
 import { createCalendarClient } from "@/calendar.ts";
 import { createGmailClient } from "@/gmail.ts";
+import { createLogger } from "@/logger.ts";
 import type { ToolDefinition } from "@/tool-registry.ts";
 import {
   DESTRUCTIVE_ANNOTATIONS,
@@ -119,24 +120,33 @@ import {
  * Main server initialization
  */
 async function main() {
-  console.error("GMCP Server - Starting...");
+  const logger = createLogger();
+
+  logger.info({ version: "1.0.0" }, "GMCP Server starting");
 
   const { credentialsPath, tokenPath, scopes } = getEnvConfig();
 
-  console.error(`Credentials: ${credentialsPath}`);
-  console.error(`Token: ${tokenPath}`);
-  console.error(`Scopes: ${scopes.join(", ")}`);
-
-  console.error("Authenticating with Gmail API...");
-  const oauth2Client = await createAuthenticatedClient(
-    credentialsPath,
-    tokenPath
+  logger.info(
+    {
+      credentialsPath,
+      tokenPath,
+      scopeCount: scopes.length,
+      scopes,
+    },
+    "Environment configuration loaded"
   );
 
-  const gmailClient = createGmailClient(oauth2Client);
-  const calendarClient = createCalendarClient(oauth2Client);
+  logger.info("Authenticating with Google APIs");
+  const oauth2Client = await createAuthenticatedClient(
+    credentialsPath,
+    tokenPath,
+    logger
+  );
 
-  console.error("Gmail and Calendar clients initialized");
+  const gmailClient = createGmailClient(oauth2Client, logger);
+  const calendarClient = createCalendarClient(oauth2Client, logger);
+
+  logger.info("Gmail and Calendar clients initialized");
 
   const server = new McpServer({
     name: "gmcp-server",
@@ -301,22 +311,34 @@ async function main() {
     },
   ] as ToolDefinition<unknown>[];
 
-  registerTools(server, gmailClient, tools);
-  registerTools(server, calendarClient, calendarTools);
+  registerTools(server, gmailClient, tools, logger);
+  registerTools(server, calendarClient, calendarTools, logger);
 
-  console.error(
-    `Tools registered (${tools.length} Gmail + ${calendarTools.length} Calendar = ${tools.length + calendarTools.length} total)`
+  const totalTools = tools.length + calendarTools.length;
+  logger.info(
+    {
+      gmailTools: tools.length,
+      calendarTools: calendarTools.length,
+      totalTools,
+    },
+    "Tools registered"
   );
 
   const transport = new StdioServerTransport();
   await server.connect(transport);
 
-  console.error("MCP server connected via stdio");
-  console.error("Ready to accept requests");
+  logger.info("MCP server connected via stdio");
+  logger.info("Ready to accept requests");
 }
 
 main().catch((error) => {
-  console.error("Fatal error:");
-  console.error(error);
+  const logger = createLogger();
+  logger.error(
+    {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    },
+    "Fatal error"
+  );
   process.exit(1);
 });

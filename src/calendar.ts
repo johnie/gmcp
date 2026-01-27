@@ -5,6 +5,7 @@
 import type { OAuth2Client } from "google-auth-library";
 import type { calendar_v3 } from "googleapis";
 import { google } from "googleapis";
+import type { Logger } from "pino";
 import type {
   CalendarAttendee,
   CalendarEvent,
@@ -152,7 +153,10 @@ export function parseEvent(event: calendar_v3.Schema$Event): CalendarEvent {
 /**
  * Create Calendar API client
  */
-export function createCalendarClient(auth: OAuth2Client): CalendarClient {
+export function createCalendarClient(
+  auth: OAuth2Client,
+  logger?: Logger
+): CalendarClient {
   const calendar = google.calendar({ version: "v3", auth });
 
   return {
@@ -161,14 +165,31 @@ export function createCalendarClient(auth: OAuth2Client): CalendarClient {
      * @param showHidden Include hidden calendars (default: false)
      */
     async listCalendars(showHidden = false): Promise<CalendarInfo[]> {
+      const startTime = Date.now();
+      logger?.debug({ showHidden }, "listCalendars start");
+
       try {
         const response = await calendar.calendarList.list({
           showHidden,
         });
 
         const calendars = response.data.items || [];
-        return calendars.map((cal) => parseCalendar(cal));
+        const result = calendars.map((cal) => parseCalendar(cal));
+
+        logger?.info(
+          { calendarCount: result.length, durationMs: Date.now() - startTime },
+          "listCalendars completed"
+        );
+
+        return result;
       } catch (error) {
+        logger?.error(
+          {
+            error: error instanceof Error ? error.message : String(error),
+            stack: error instanceof Error ? error.stack : undefined,
+          },
+          "listCalendars failed"
+        );
         throw new Error(`Failed to list calendars: ${error}`);
       }
     },
@@ -192,6 +213,12 @@ export function createCalendarClient(auth: OAuth2Client): CalendarClient {
       singleEvents = true,
       orderBy: "startTime" | "updated" = "startTime"
     ): Promise<CalendarEvent[]> {
+      const startTime = Date.now();
+      logger?.debug(
+        { calendarId, timeMin, timeMax, maxResults, query },
+        "listEvents start"
+      );
+
       try {
         const response = await calendar.events.list({
           calendarId,
@@ -204,8 +231,27 @@ export function createCalendarClient(auth: OAuth2Client): CalendarClient {
         });
 
         const events = response.data.items || [];
-        return events.map((event) => parseEvent(event));
+        const result = events.map((event) => parseEvent(event));
+
+        logger?.info(
+          {
+            calendarId,
+            eventCount: result.length,
+            durationMs: Date.now() - startTime,
+          },
+          "listEvents completed"
+        );
+
+        return result;
       } catch (error) {
+        logger?.error(
+          {
+            calendarId,
+            error: error instanceof Error ? error.message : String(error),
+            stack: error instanceof Error ? error.stack : undefined,
+          },
+          "listEvents failed"
+        );
         throw new Error(
           `Failed to list events from calendar ${calendarId}: ${error}`
         );
@@ -221,14 +267,33 @@ export function createCalendarClient(auth: OAuth2Client): CalendarClient {
       calendarId: string,
       eventId: string
     ): Promise<CalendarEvent> {
+      const startTime = Date.now();
+      logger?.debug({ calendarId, eventId }, "getEvent start");
+
       try {
         const response = await calendar.events.get({
           calendarId,
           eventId,
         });
 
-        return parseEvent(response.data);
+        const result = parseEvent(response.data);
+
+        logger?.info(
+          { calendarId, eventId, durationMs: Date.now() - startTime },
+          "getEvent completed"
+        );
+
+        return result;
       } catch (error) {
+        logger?.error(
+          {
+            calendarId,
+            eventId,
+            error: error instanceof Error ? error.message : String(error),
+            stack: error instanceof Error ? error.stack : undefined,
+          },
+          "getEvent failed"
+        );
         throw new Error(
           `Failed to get event ${eventId} from calendar ${calendarId}: ${error}`
         );
@@ -260,6 +325,12 @@ export function createCalendarClient(auth: OAuth2Client): CalendarClient {
       recurrence?: string[],
       addMeet?: boolean
     ): Promise<CalendarEvent> {
+      const startTime = Date.now();
+      logger?.debug(
+        { calendarId, summary, start, end, addMeet },
+        "createEvent start"
+      );
+
       try {
         // Detect if this is an all-day event
         const isAllDay = isAllDayDate(start);
@@ -294,8 +365,29 @@ export function createCalendarClient(auth: OAuth2Client): CalendarClient {
           conferenceDataVersion: addMeet ? 1 : undefined,
         });
 
-        return parseEvent(response.data);
+        const result = parseEvent(response.data);
+
+        logger?.info(
+          {
+            calendarId,
+            summary,
+            eventId: result.id,
+            durationMs: Date.now() - startTime,
+          },
+          "createEvent completed"
+        );
+
+        return result;
       } catch (error) {
+        logger?.error(
+          {
+            calendarId,
+            summary,
+            error: error instanceof Error ? error.message : String(error),
+            stack: error instanceof Error ? error.stack : undefined,
+          },
+          "createEvent failed"
+        );
         throw new Error(
           `Failed to create event "${summary}" in calendar ${calendarId}: ${error}`
         );
