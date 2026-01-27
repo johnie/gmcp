@@ -85,7 +85,7 @@ describe("searchEmailsTool", () => {
       output_format: "markdown",
     });
 
-    expect(result.isError).toBe(true);
+    expect("isError" in result && result.isError).toBe(true);
     if (result.content[0]?.type === "text") {
       expect(result.content[0].text).toContain("Error");
     }
@@ -144,7 +144,7 @@ describe("getEmailTool", () => {
       output_format: "markdown",
     });
 
-    expect(result.isError).toBe(true);
+    expect("isError" in result && result.isError).toBe(true);
     if (result.content[0]?.type === "text") {
       expect(result.content[0].text).toContain("Error");
     }
@@ -237,7 +237,7 @@ describe("sendEmailTool", () => {
       output_format: "markdown",
     });
 
-    expect(result.isError).toBe(true);
+    expect("isError" in result && result.isError).toBe(true);
     if (result.content[0]?.type === "text") {
       expect(result.content[0].text).toContain("Error");
     }
@@ -304,7 +304,7 @@ describe("deleteLabelTool", () => {
       output_format: "markdown",
     });
 
-    expect(result.isError).toBe(true);
+    expect("isError" in result && result.isError).toBe(true);
     if (result.content[0]?.type === "text") {
       expect(result.content[0].text).toContain("Error");
     }
