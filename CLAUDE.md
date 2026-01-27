@@ -22,6 +22,51 @@ GMCP is an MCP (Model Context Protocol) server that provides Gmail API integrati
 - Strict TypeScript enabled with additional safety checks
 - Code quality enforced via Ultracite (Biome-based linting/formatting)
 
+## Code Style
+
+### TypeScript Types
+
+- Use `type` instead of `interface` - always
+- Infer types from Zod schemas: `type Foo = z.infer<typeof FooSchema>`
+- Explicit return types on exported functions
+- Use `import type` for type-only imports
+- `as const` for immutable config objects
+- Union types over enums: `"a" | "b"` not `enum`
+
+### Functional Architecture
+
+- No classes - use factory functions returning object literals
+- Pure functions with explicit inputs/outputs
+- Composition over inheritance
+- Immutable data patterns (spread for updates)
+
+### Function Style
+
+- Named `function` declarations for exports
+- Arrow functions only for callbacks/inline ops
+- Early returns, minimal nesting
+- Single responsibility per function
+
+### Example Patterns
+
+```ts
+// Type definition
+type EmailMessage = {
+  id: string
+  subject: string
+}
+
+// Factory function
+function createClient(auth: Auth): Client {
+  return {
+    async fetch() { ... }
+  }
+}
+
+// Tool handler
+async function searchEmailsTool(client: GmailClient, params: SearchInput) { ... }
+```
+
 ## Architecture
 
 ### Core Components
