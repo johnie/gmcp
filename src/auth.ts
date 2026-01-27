@@ -145,16 +145,16 @@ export async function createAuthenticatedClient(
  * Get environment variable configuration
  */
 export function getEnvConfig() {
-  const credentialsPath = process.env.GMAIL_CREDENTIALS_PATH;
-  const tokenPath = process.env.GMAIL_TOKEN_PATH;
-  const scopesEnv = process.env.GMAIL_SCOPES;
+  const credentialsPath = process.env.GOOGLE_CREDENTIALS_PATH;
+  const tokenPath = process.env.GOOGLE_TOKEN_PATH;
+  const scopesEnv = process.env.GOOGLE_SCOPES;
 
   if (!credentialsPath) {
-    throw new Error("GMAIL_CREDENTIALS_PATH environment variable is required");
+    throw new Error("GOOGLE_CREDENTIALS_PATH environment variable is required");
   }
 
   if (!tokenPath) {
-    throw new Error("GMAIL_TOKEN_PATH environment variable is required");
+    throw new Error("GOOGLE_TOKEN_PATH environment variable is required");
   }
 
   const scopes = parseScopes(scopesEnv);

@@ -19,7 +19,7 @@ describe("deleteLabelTool validation", () => {
       output_format: "markdown",
     });
 
-    expect(result.isError).toBe(true);
+    expect("isError" in result && result.isError).toBe(true);
     if (result.content[0]?.type === "text") {
       expect(result.content[0].text).toContain("Cannot delete system label");
     }
@@ -32,7 +32,7 @@ describe("deleteLabelTool validation", () => {
       output_format: "markdown",
     });
 
-    expect(result.isError).toBe(true);
+    expect("isError" in result && result.isError).toBe(true);
     if (result.content[0]?.type === "text") {
       expect(result.content[0].text).toContain("Cannot delete system label");
     }
@@ -45,7 +45,7 @@ describe("deleteLabelTool validation", () => {
       output_format: "markdown",
     });
 
-    expect(result.isError).toBe(true);
+    expect("isError" in result && result.isError).toBe(true);
     if (result.content[0]?.type === "text") {
       expect(result.content[0].text).toContain("Cannot delete system label");
     }
@@ -58,7 +58,7 @@ describe("deleteLabelTool validation", () => {
       output_format: "markdown",
     });
 
-    expect(result.isError).toBe(true);
+    expect("isError" in result && result.isError).toBe(true);
     if (result.content[0]?.type === "text") {
       expect(result.content[0].text).toContain("Cannot delete system label");
     }
@@ -71,7 +71,7 @@ describe("deleteLabelTool validation", () => {
       output_format: "markdown",
     });
 
-    expect(result.isError).toBe(true);
+    expect("isError" in result && result.isError).toBe(true);
     if (result.content[0]?.type === "text") {
       expect(result.content[0].text).toContain("Cannot delete system label");
     }
@@ -84,7 +84,7 @@ describe("deleteLabelTool validation", () => {
       output_format: "markdown",
     });
 
-    expect(result.isError).toBe(true);
+    expect("isError" in result && result.isError).toBe(true);
     if (result.content[0]?.type === "text") {
       expect(result.content[0].text).toContain("Cannot delete system label");
     }
@@ -97,7 +97,7 @@ describe("deleteLabelTool validation", () => {
       output_format: "markdown",
     });
 
-    expect(result.isError).not.toBe(true);
+    expect("isError" in result && result.isError).not.toBe(true);
   });
 });
 
@@ -109,7 +109,7 @@ describe("modifyLabelsTool validation", () => {
       output_format: "markdown",
     });
 
-    expect(result.isError).toBe(true);
+    expect("isError" in result && result.isError).toBe(true);
     if (result.content[0]?.type === "text") {
       expect(result.content[0].text).toContain(
         "Must specify at least one of add_labels or remove_labels"
@@ -125,7 +125,7 @@ describe("modifyLabelsTool validation", () => {
       output_format: "markdown",
     });
 
-    expect(result.isError).not.toBe(true);
+    expect("isError" in result && result.isError).not.toBe(true);
   });
 
   it("allows only remove_labels", async () => {
@@ -136,7 +136,7 @@ describe("modifyLabelsTool validation", () => {
       output_format: "markdown",
     });
 
-    expect(result.isError).not.toBe(true);
+    expect("isError" in result && result.isError).not.toBe(true);
   });
 
   it("allows both add_labels and remove_labels", async () => {
@@ -148,7 +148,7 @@ describe("modifyLabelsTool validation", () => {
       output_format: "markdown",
     });
 
-    expect(result.isError).not.toBe(true);
+    expect("isError" in result && result.isError).not.toBe(true);
   });
 });
 
@@ -160,7 +160,7 @@ describe("batchModifyTool validation", () => {
       output_format: "markdown",
     });
 
-    expect(result.isError).toBe(true);
+    expect("isError" in result && result.isError).toBe(true);
     if (result.content[0]?.type === "text") {
       expect(result.content[0].text).toContain(
         "Must specify at least one of add_labels or remove_labels"
@@ -176,7 +176,7 @@ describe("batchModifyTool validation", () => {
       output_format: "markdown",
     });
 
-    expect(result.isError).not.toBe(true);
+    expect("isError" in result && result.isError).not.toBe(true);
   });
 
   it("allows remove_labels only", async () => {
@@ -187,7 +187,7 @@ describe("batchModifyTool validation", () => {
       output_format: "markdown",
     });
 
-    expect(result.isError).not.toBe(true);
+    expect("isError" in result && result.isError).not.toBe(true);
   });
 });
 
@@ -271,7 +271,7 @@ describe("createLabelTool validation", () => {
       output_format: "markdown",
     });
 
-    expect(result.isError).toBe(true);
+    expect("isError" in result && result.isError).toBe(true);
     if (result.content[0]?.type === "text") {
       expect(result.content[0].text).toContain(
         "Both background_color and text_color must be provided together"
@@ -287,7 +287,7 @@ describe("createLabelTool validation", () => {
       output_format: "markdown",
     });
 
-    expect(result.isError).toBe(true);
+    expect("isError" in result && result.isError).toBe(true);
     if (result.content[0]?.type === "text") {
       expect(result.content[0].text).toContain(
         "Both background_color and text_color must be provided together"
@@ -304,7 +304,7 @@ describe("createLabelTool validation", () => {
       output_format: "markdown",
     });
 
-    expect(result.isError).not.toBe(true);
+    expect("isError" in result && result.isError).not.toBe(true);
     expect(client.createLabel).toHaveBeenCalledWith(
       "Test Label",
       undefined,
@@ -321,7 +321,7 @@ describe("createLabelTool validation", () => {
       output_format: "markdown",
     });
 
-    expect(result.isError).not.toBe(true);
+    expect("isError" in result && result.isError).not.toBe(true);
     expect(client.createLabel).toHaveBeenCalledWith(
       "Test Label",
       undefined,

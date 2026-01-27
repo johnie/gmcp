@@ -134,6 +134,69 @@ export interface DraftResult {
 }
 
 /**
+ * Calendar information
+ */
+export interface CalendarInfo {
+  id: string;
+  summary: string;
+  description?: string;
+  timeZone?: string;
+  primary?: boolean;
+  backgroundColor?: string;
+  foregroundColor?: string;
+  accessRole?: string;
+}
+
+/**
+ * Calendar event date/time structure
+ */
+export interface CalendarEventDateTime {
+  date?: string; // For all-day events (YYYY-MM-DD)
+  dateTime?: string; // For timed events (RFC3339)
+  timeZone?: string;
+}
+
+/**
+ * Calendar event attendee
+ */
+export interface CalendarAttendee {
+  email: string;
+  displayName?: string;
+  responseStatus?: "needsAction" | "declined" | "tentative" | "accepted";
+  optional?: boolean;
+  organizer?: boolean;
+  self?: boolean;
+}
+
+/**
+ * Calendar event structure
+ */
+export interface CalendarEvent {
+  id: string;
+  summary: string;
+  description?: string;
+  location?: string;
+  start: CalendarEventDateTime;
+  end: CalendarEventDateTime;
+  attendees?: CalendarAttendee[];
+  creator?: {
+    email: string;
+    displayName?: string;
+  };
+  organizer?: {
+    email: string;
+    displayName?: string;
+  };
+  status?: "confirmed" | "tentative" | "cancelled";
+  htmlLink?: string;
+  hangoutLink?: string;
+  recurrence?: string[];
+  recurringEventId?: string;
+  created?: string;
+  updated?: string;
+}
+
+/**
  * Default Gmail scope (readonly access)
  */
 const DEFAULT_GMAIL_SCOPE = "https://www.googleapis.com/auth/gmail.readonly";
@@ -156,8 +219,31 @@ export const GMAIL_SCOPE_MAP: Record<string, string> = {
 };
 
 /**
+ * Default Calendar scope (readonly access)
+ */
+const DEFAULT_CALENDAR_SCOPE =
+  "https://www.googleapis.com/auth/calendar.readonly";
+
+/**
+ * Calendar scope mapping (short name to full URL)
+ */
+export const CALENDAR_SCOPE_MAP: Record<string, string> = {
+  "calendar.readonly": DEFAULT_CALENDAR_SCOPE,
+  calendar: "https://www.googleapis.com/auth/calendar",
+  "calendar.events": "https://www.googleapis.com/auth/calendar.events",
+  "calendar.events.readonly":
+    "https://www.googleapis.com/auth/calendar.events.readonly",
+  "calendar.settings.readonly":
+    "https://www.googleapis.com/auth/calendar.settings.readonly",
+  "calendar.calendarlist.readonly":
+    "https://www.googleapis.com/auth/calendar.calendarlist.readonly",
+  "calendar.calendarlist":
+    "https://www.googleapis.com/auth/calendar.calendarlist",
+};
+
+/**
  * Parse scopes from environment variable
- * Supports both short names (gmail.readonly) and full URLs
+ * Supports both short names (gmail.readonly, calendar.readonly) and full URLs
  */
 export function parseScopes(scopesEnv?: string): string[] {
   if (!scopesEnv) {
@@ -166,9 +252,13 @@ export function parseScopes(scopesEnv?: string): string[] {
 
   return scopesEnv.split(",").map((scope) => {
     const trimmed = scope.trim();
-    // If it's a short name, map it
+    // Check Gmail scope map first
     if (GMAIL_SCOPE_MAP[trimmed]) {
       return GMAIL_SCOPE_MAP[trimmed];
+    }
+    // Then check Calendar scope map
+    if (CALENDAR_SCOPE_MAP[trimmed]) {
+      return CALENDAR_SCOPE_MAP[trimmed];
     }
     // Otherwise, assume it's a full URL
     return trimmed;

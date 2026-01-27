@@ -490,3 +490,288 @@ export function draftCreatedToMarkdown(
 
   return json2md(sections);
 }
+
+/**
+ * Calendar data structure for markdown conversion
+ */
+interface CalendarData {
+  id: string;
+  summary: string;
+  description?: string;
+  timezone?: string;
+  primary?: boolean;
+  access_role?: string;
+  background_color?: string;
+  foreground_color?: string;
+}
+
+/**
+ * Calendar list result structure
+ */
+interface CalendarListData {
+  count: number;
+  calendars: CalendarData[];
+}
+
+/**
+ * Convert calendar list to markdown
+ */
+export function calendarListToMarkdown(data: CalendarListData): string {
+  const sections: json2md.DataObject[] = [
+    { h1: "Google Calendars" },
+    { p: `**Total Calendars:** ${data.count}` },
+  ];
+
+  if (data.calendars.length === 0) {
+    sections.push({ p: "No calendars found." });
+  } else {
+    for (const calendar of data.calendars) {
+      sections.push({ h2: calendar.summary });
+      const details: string[] = [
+        `**ID:** ${calendar.id}`,
+        `**Timezone:** ${calendar.timezone || "Not set"}`,
+        `**Access Role:** ${calendar.access_role || "Unknown"}`,
+      ];
+
+      if (calendar.primary) {
+        details.push("**Primary:** Yes");
+      }
+      if (calendar.description) {
+        details.push(`**Description:** ${calendar.description}`);
+      }
+
+      sections.push({ ul: details });
+    }
+  }
+
+  return json2md(sections);
+}
+
+/**
+ * Format date/time for display
+ */
+function formatEventTime(time: {
+  date?: string;
+  dateTime?: string;
+  timeZone?: string;
+}): string {
+  if (time.date) {
+    return `📅 ${time.date} (All day)`;
+  }
+  if (time.dateTime) {
+    const tz = time.timeZone ? ` (${time.timeZone})` : "";
+    return `🕐 ${time.dateTime}${tz}`;
+  }
+  return "Not set";
+}
+
+/**
+ * Calendar event data structure
+ */
+interface EventData {
+  id: string;
+  summary: string;
+  description?: string;
+  location?: string;
+  start: {
+    date?: string;
+    dateTime?: string;
+    timeZone?: string;
+  };
+  end: {
+    date?: string;
+    dateTime?: string;
+    timeZone?: string;
+  };
+  status?: string;
+  html_link?: string;
+  hangout_link?: string;
+  attendees?: {
+    email: string;
+    display_name?: string;
+    response_status?: string;
+    optional?: boolean;
+  }[];
+  creator?: {
+    email: string;
+    display_name?: string;
+  };
+  organizer?: {
+    email: string;
+    display_name?: string;
+  };
+  recurrence?: string[];
+  recurring_event_id?: string;
+  created?: string;
+  updated?: string;
+}
+
+/**
+ * Event list result structure
+ */
+interface EventListData {
+  calendar_id: string;
+  count: number;
+  events: EventData[];
+}
+
+/**
+ * Build event details array
+ */
+function buildEventDetails(event: EventData): string[] {
+  const details: string[] = [
+    `**Event ID:** ${event.id}`,
+    `**Start:** ${formatEventTime(event.start)}`,
+    `**End:** ${formatEventTime(event.end)}`,
+  ];
+
+  if (event.location) {
+    details.push(`**Location:** ${event.location}`);
+  }
+  if (event.status) {
+    details.push(`**Status:** ${event.status}`);
+  }
+  if (event.hangout_link) {
+    details.push(`**Google Meet:** ${event.hangout_link}`);
+  }
+  if (event.html_link) {
+    details.push(`**View in Calendar:** ${event.html_link}`);
+  }
+
+  return details;
+}
+
+/**
+ * Format attendee for display
+ */
+function formatAttendee(
+  att: NonNullable<EventData["attendees"]>[number]
+): string {
+  const name = att.display_name || att.email;
+  const status = att.response_status ? ` (${att.response_status})` : "";
+  const optional = att.optional ? " [Optional]" : "";
+  return `${name}${status}${optional}`;
+}
+
+/**
+ * Add event summary to sections
+ */
+function addEventSummary(
+  sections: json2md.DataObject[],
+  event: EventData
+): void {
+  sections.push({ h2: event.summary });
+  sections.push({ ul: buildEventDetails(event) });
+
+  if (event.description) {
+    sections.push({ p: `**Description:** ${event.description}` });
+  }
+
+  if (event.attendees && event.attendees.length > 0) {
+    sections.push({ h3: "Attendees" });
+    sections.push({ ul: event.attendees.map(formatAttendee) });
+  }
+
+  if (event.recurrence && event.recurrence.length > 0) {
+    sections.push({ p: `**Recurrence:** ${event.recurrence.join(", ")}` });
+  }
+}
+
+/**
+ * Convert event list to markdown
+ */
+export function eventListToMarkdown(data: EventListData): string {
+  const sections: json2md.DataObject[] = [
+    { h1: "Calendar Events" },
+    {
+      p: `**Calendar:** ${data.calendar_id} | **Events Found:** ${data.count}`,
+    },
+  ];
+
+  if (data.events.length === 0) {
+    sections.push({ p: "No events found matching the criteria." });
+  } else {
+    for (const event of data.events) {
+      addEventSummary(sections, event);
+      sections.push({ hr: "" });
+    }
+  }
+
+  return json2md(sections);
+}
+
+/**
+ * Format attendee for detailed display
+ */
+function formatAttendeeDetailed(
+  att: NonNullable<EventData["attendees"]>[number]
+): string {
+  const name = att.display_name || att.email;
+  const status = att.response_status ? ` - ${att.response_status}` : "";
+  const optional = att.optional ? " [Optional]" : "";
+  return `**${name}**${status}${optional}`;
+}
+
+/**
+ * Add event metadata to sections
+ */
+function addEventMetadata(
+  sections: json2md.DataObject[],
+  event: EventData
+): void {
+  if (event.creator) {
+    sections.push({
+      p: `**Created by:** ${event.creator.display_name || event.creator.email}`,
+    });
+  }
+
+  if (event.organizer) {
+    sections.push({
+      p: `**Organized by:** ${event.organizer.display_name || event.organizer.email}`,
+    });
+  }
+
+  if (event.recurrence && event.recurrence.length > 0) {
+    sections.push({ h2: "Recurrence" });
+    sections.push({ ul: event.recurrence });
+  }
+
+  if (event.created || event.updated) {
+    const metadata: string[] = [];
+    if (event.created) {
+      metadata.push(`**Created:** ${event.created}`);
+    }
+    if (event.updated) {
+      metadata.push(`**Last Updated:** ${event.updated}`);
+    }
+    sections.push({ p: metadata.join(" | ") });
+  }
+}
+
+/**
+ * Convert single event to markdown
+ */
+export function eventToMarkdown(
+  event: EventData,
+  successMessage?: string
+): string {
+  const sections: json2md.DataObject[] = [];
+
+  sections.push({ h1: successMessage || "Calendar Event" });
+  sections.push({ h2: event.summary });
+  sections.push({ ul: buildEventDetails(event) });
+
+  if (event.description) {
+    sections.push({ h2: "Description" });
+    sections.push({ p: event.description });
+  }
+
+  if (event.attendees && event.attendees.length > 0) {
+    sections.push({ h2: "Attendees" });
+    sections.push({ ul: event.attendees.map(formatAttendeeDetailed) });
+  }
+
+  addEventMetadata(sections, event);
+
+  return json2md(sections);
+}
