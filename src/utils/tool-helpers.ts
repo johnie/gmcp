@@ -2,6 +2,8 @@
  * Shared utilities for MCP tool implementations
  */
 
+import type { Logger } from "pino";
+
 /**
  * MCP tool response type
  */
@@ -44,9 +46,20 @@ export function formatEmailForOutput(email: {
  */
 export function createErrorResponse(
   context: string,
-  error: unknown
+  error: unknown,
+  logger?: Logger
 ): ToolResponse {
   const errorMessage = error instanceof Error ? error.message : String(error);
+
+  logger?.error(
+    {
+      context,
+      error: errorMessage,
+      stack: error instanceof Error ? error.stack : undefined,
+    },
+    "Tool error"
+  );
+
   return {
     content: [
       {

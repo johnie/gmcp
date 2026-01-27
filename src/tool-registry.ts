@@ -3,6 +3,7 @@
  */
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { Logger } from "pino";
 import type { z } from "zod";
 import type { ToolResponse } from "@/utils/tool-helpers.ts";
 
@@ -71,7 +72,8 @@ export const DESTRUCTIVE_ANNOTATIONS = {
 export function registerTools<TClient>(
   server: McpServer,
   client: TClient,
-  tools: ToolDefinition<unknown, TClient>[]
+  tools: ToolDefinition<unknown, TClient>[],
+  logger?: Logger
 ): void {
   for (const tool of tools) {
     server.registerTool(
@@ -83,7 +85,31 @@ export function registerTools<TClient>(
         annotations: tool.annotations,
       },
       async (params: unknown) => {
-        return await tool.handler(client, params);
+        const toolLogger = logger?.child({ tool: tool.name });
+        const startTime = Date.now();
+
+        toolLogger?.info({ params }, "Tool execution start");
+
+        try {
+          const result = await tool.handler(client, params);
+
+          toolLogger?.info(
+            { durationMs: Date.now() - startTime, success: !result.isError },
+            "Tool execution completed"
+          );
+
+          return result;
+        } catch (error) {
+          toolLogger?.error(
+            {
+              durationMs: Date.now() - startTime,
+              error: error instanceof Error ? error.message : String(error),
+              stack: error instanceof Error ? error.stack : undefined,
+            },
+            "Tool execution failed"
+          );
+          throw error;
+        }
       }
     );
   }

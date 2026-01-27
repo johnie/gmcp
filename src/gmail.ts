@@ -5,6 +5,7 @@
 import type { OAuth2Client } from "google-auth-library";
 import type { gmail_v1 } from "googleapis";
 import { google } from "googleapis";
+import type { Logger } from "pino";
 import { EMAIL_FETCH_BATCH_SIZE } from "@/constants.ts";
 import type {
   AttachmentInfo,
@@ -279,7 +280,10 @@ export function parseLabel(label: gmail_v1.Schema$Label): GmailLabel {
 /**
  * Create Gmail API client
  */
-export function createGmailClient(auth: OAuth2Client): GmailClient {
+export function createGmailClient(
+  auth: OAuth2Client,
+  logger?: Logger
+): GmailClient {
   const gmail = google.gmail({ version: "v1", auth });
 
   return {
@@ -296,6 +300,12 @@ export function createGmailClient(auth: OAuth2Client): GmailClient {
       includeBody = false,
       pageToken?: string
     ): Promise<GmailSearchResult> {
+      const startTime = Date.now();
+      logger?.debug(
+        { query, maxResults, includeBody, pageToken },
+        "searchEmails start"
+      );
+
       try {
         const listResponse = await gmail.users.messages.list({
           userId: "me",
@@ -315,6 +325,7 @@ export function createGmailClient(auth: OAuth2Client): GmailClient {
         const emails: EmailMessage[] = [];
 
         for (let i = 0; i < validMessages.length; i += EMAIL_FETCH_BATCH_SIZE) {
+          const batchStartTime = Date.now();
           const batch = validMessages.slice(i, i + EMAIL_FETCH_BATCH_SIZE);
 
           const batchEmails = await Promise.all(
@@ -335,7 +346,21 @@ export function createGmailClient(auth: OAuth2Client): GmailClient {
           );
 
           emails.push(...batchEmails);
+
+          logger?.debug(
+            {
+              batchSize: batch.length,
+              durationMs: Date.now() - batchStartTime,
+            },
+            "searchEmails batch completed"
+          );
         }
+
+        const durationMs = Date.now() - startTime;
+        logger?.info(
+          { query, resultCount: emails.length, durationMs },
+          "searchEmails completed"
+        );
 
         return {
           emails,
@@ -344,6 +369,14 @@ export function createGmailClient(auth: OAuth2Client): GmailClient {
           next_page_token: nextPageToken || undefined,
         };
       } catch (error) {
+        logger?.error(
+          {
+            query,
+            error: error instanceof Error ? error.message : String(error),
+            stack: error instanceof Error ? error.stack : undefined,
+          },
+          "searchEmails failed"
+        );
         throw new Error(
           `Failed to search emails with query "${query}": ${error}`
         );
@@ -357,6 +390,9 @@ export function createGmailClient(auth: OAuth2Client): GmailClient {
       messageId: string,
       includeBody = false
     ): Promise<EmailMessage> {
+      const startTime = Date.now();
+      logger?.debug({ messageId, includeBody }, "getMessage start");
+
       try {
         const response = await gmail.users.messages.get({
           userId: "me",
@@ -367,8 +403,23 @@ export function createGmailClient(auth: OAuth2Client): GmailClient {
             : ["From", "To", "Subject", "Date"],
         });
 
-        return parseMessage(response.data, includeBody);
+        const result = parseMessage(response.data, includeBody);
+
+        logger?.info(
+          { messageId, durationMs: Date.now() - startTime },
+          "getMessage completed"
+        );
+
+        return result;
       } catch (error) {
+        logger?.error(
+          {
+            messageId,
+            error: error instanceof Error ? error.message : String(error),
+            stack: error instanceof Error ? error.stack : undefined,
+          },
+          "getMessage failed"
+        );
         throw new Error(`Failed to get message ${messageId}: ${error}`);
       }
     },
@@ -498,6 +549,16 @@ export function createGmailClient(auth: OAuth2Client): GmailClient {
       addLabelIds?: string[],
       removeLabelIds?: string[]
     ): Promise<void> {
+      const startTime = Date.now();
+      logger?.debug(
+        {
+          messageCount: messageIds.length,
+          addLabelCount: addLabelIds?.length || 0,
+          removeLabelCount: removeLabelIds?.length || 0,
+        },
+        "batchModifyLabels start"
+      );
+
       try {
         await gmail.users.messages.batchModify({
           userId: "me",
@@ -507,7 +568,23 @@ export function createGmailClient(auth: OAuth2Client): GmailClient {
             removeLabelIds: removeLabelIds || [],
           },
         });
+
+        logger?.info(
+          {
+            messageCount: messageIds.length,
+            durationMs: Date.now() - startTime,
+          },
+          "batchModifyLabels completed"
+        );
       } catch (error) {
+        logger?.error(
+          {
+            messageCount: messageIds.length,
+            error: error instanceof Error ? error.message : String(error),
+            stack: error instanceof Error ? error.stack : undefined,
+          },
+          "batchModifyLabels failed"
+        );
         throw new Error(
           `Failed to batch modify labels on ${messageIds.length} messages: ${error}`
         );
@@ -525,6 +602,9 @@ export function createGmailClient(auth: OAuth2Client): GmailClient {
       cc?: string,
       bcc?: string
     ): Promise<SendResult> {
+      const startTime = Date.now();
+      logger?.debug({ to, subject, contentType }, "sendEmail start");
+
       try {
         const mimeMessage = createMimeMessage({
           to,
@@ -543,12 +623,33 @@ export function createGmailClient(auth: OAuth2Client): GmailClient {
           },
         });
 
-        return {
+        const result = {
           id: response.data.id || "",
           threadId: response.data.threadId || "",
           labelIds: response.data.labelIds || undefined,
         };
+
+        logger?.info(
+          {
+            to,
+            subject,
+            messageId: result.id,
+            durationMs: Date.now() - startTime,
+          },
+          "sendEmail completed"
+        );
+
+        return result;
       } catch (error) {
+        logger?.error(
+          {
+            to,
+            subject,
+            error: error instanceof Error ? error.message : String(error),
+            stack: error instanceof Error ? error.stack : undefined,
+          },
+          "sendEmail failed"
+        );
         throw new Error(`Failed to send email to ${to}: ${error}`);
       }
     },
