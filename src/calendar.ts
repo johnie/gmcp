@@ -5,7 +5,12 @@
 import type { OAuth2Client } from "google-auth-library";
 import type { calendar_v3 } from "googleapis";
 import { google } from "googleapis";
-import type { CalendarEvent, CalendarInfo } from "@/types.ts";
+import type {
+  CalendarAttendee,
+  CalendarEvent,
+  CalendarEventDateTime,
+  CalendarInfo,
+} from "@/types.ts";
 
 /**
  * Calendar API client interface

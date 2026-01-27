@@ -325,7 +325,11 @@ describe("calendarCreateEventTool", () => {
     if (result.content[0]?.type === "text") {
       expect(result.content[0].text).toContain("confirmation");
     }
-    expect(result.structuredContent?.error).toBe("Confirmation required");
+    expect(
+      result.structuredContent &&
+        "error" in result.structuredContent &&
+        result.structuredContent.error
+    ).toBe("Confirmation required");
   });
 
   it("calls client.createEvent with all params when confirm is true", async () => {
