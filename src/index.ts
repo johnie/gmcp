@@ -2,13 +2,14 @@
 /**
  * GMCP Server
  *
- * MCP server for Gmail API with OAuth2 authentication.
- * Provides tools to search and interact with Gmail messages.
+ * MCP server for Gmail and Google Calendar APIs with OAuth2 authentication.
+ * Provides tools to search and interact with Gmail messages and Calendar events.
  */
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { createAuthenticatedClient, getEnvConfig } from "@/auth.ts";
+import { createCalendarClient } from "@/calendar.ts";
 import { createGmailClient } from "@/gmail.ts";
 import type { ToolDefinition } from "@/tool-registry.ts";
 import {
@@ -23,6 +24,26 @@ import {
   BatchModifyInputSchema,
   batchModifyTool,
 } from "@/tools/batch-modify.ts";
+import {
+  CALENDAR_CREATE_EVENT_DESCRIPTION,
+  CalendarCreateEventInputSchema,
+  calendarCreateEventTool,
+} from "@/tools/calendar-create.ts";
+import {
+  CALENDAR_EVENTS_DESCRIPTION,
+  CalendarEventsInputSchema,
+  calendarEventsTool,
+} from "@/tools/calendar-events.ts";
+import {
+  CALENDAR_GET_EVENT_DESCRIPTION,
+  CalendarGetEventInputSchema,
+  calendarGetEventTool,
+} from "@/tools/calendar-get-event.ts";
+import {
+  CALENDAR_LIST_DESCRIPTION,
+  CalendarListInputSchema,
+  calendarListTool,
+} from "@/tools/calendar-list.ts";
 import {
   CREATE_DRAFT_DESCRIPTION,
   CreateDraftInputSchema,
@@ -113,8 +134,9 @@ async function main() {
   );
 
   const gmailClient = createGmailClient(oauth2Client);
+  const calendarClient = createCalendarClient(oauth2Client);
 
-  console.error("Gmail client initialized");
+  console.error("Gmail and Calendar clients initialized");
 
   const server = new McpServer({
     name: "gmcp-server",
@@ -244,9 +266,47 @@ async function main() {
     },
   ] as ToolDefinition<unknown>[];
 
-  registerTools(server, gmailClient, tools);
+  const calendarTools = [
+    {
+      name: "gmcp_calendar_list_calendars",
+      title: "List Google Calendars",
+      description: CALENDAR_LIST_DESCRIPTION,
+      inputSchema: CalendarListInputSchema,
+      annotations: READ_ONLY_ANNOTATIONS,
+      handler: calendarListTool,
+    },
+    {
+      name: "gmcp_calendar_list_events",
+      title: "List Calendar Events",
+      description: CALENDAR_EVENTS_DESCRIPTION,
+      inputSchema: CalendarEventsInputSchema,
+      annotations: READ_ONLY_ANNOTATIONS,
+      handler: calendarEventsTool,
+    },
+    {
+      name: "gmcp_calendar_get_event",
+      title: "Get Calendar Event",
+      description: CALENDAR_GET_EVENT_DESCRIPTION,
+      inputSchema: CalendarGetEventInputSchema,
+      annotations: READ_ONLY_ANNOTATIONS,
+      handler: calendarGetEventTool,
+    },
+    {
+      name: "gmcp_calendar_create_event",
+      title: "Create Calendar Event",
+      description: CALENDAR_CREATE_EVENT_DESCRIPTION,
+      inputSchema: CalendarCreateEventInputSchema,
+      annotations: SEND_ANNOTATIONS,
+      handler: calendarCreateEventTool,
+    },
+  ] as ToolDefinition<unknown>[];
 
-  console.error(`Tools registered (${tools.length} total)`);
+  registerTools(server, gmailClient, tools);
+  registerTools(server, calendarClient, calendarTools);
+
+  console.error(
+    `Tools registered (${tools.length} Gmail + ${calendarTools.length} Calendar = ${tools.length + calendarTools.length} total)`
+  );
 
   const transport = new StdioServerTransport();
   await server.connect(transport);
