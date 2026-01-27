@@ -4,13 +4,13 @@
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { z } from "zod";
-import type { GmailClient } from "@/gmail.ts";
 import type { ToolResponse } from "@/utils/tool-helpers.ts";
 
 /**
  * Tool definition structure
+ * Generic to support different client types (GmailClient, CalendarClient, etc.)
  */
-export interface ToolDefinition<TInput = unknown> {
+export interface ToolDefinition<TInput = unknown, TClient = unknown> {
   name: string;
   title: string;
   description: string;
@@ -21,7 +21,7 @@ export interface ToolDefinition<TInput = unknown> {
     idempotentHint: boolean;
     openWorldHint: boolean;
   };
-  handler: (client: GmailClient, params: TInput) => Promise<ToolResponse>;
+  handler: (client: TClient, params: TInput) => Promise<ToolResponse>;
 }
 
 /**
@@ -66,11 +66,12 @@ export const DESTRUCTIVE_ANNOTATIONS = {
 
 /**
  * Register multiple tools with the MCP server
+ * Generic to support different client types (GmailClient, CalendarClient, etc.)
  */
-export function registerTools(
+export function registerTools<TClient>(
   server: McpServer,
-  gmailClient: GmailClient,
-  tools: ToolDefinition<unknown>[]
+  client: TClient,
+  tools: ToolDefinition<unknown, TClient>[]
 ): void {
   for (const tool of tools) {
     server.registerTool(
@@ -82,7 +83,7 @@ export function registerTools(
         annotations: tool.annotations,
       },
       async (params: unknown) => {
-        return await tool.handler(gmailClient, params);
+        return await tool.handler(client, params);
       }
     );
   }
