@@ -1,6 +1,6 @@
 # GMCP
 
-MCP (Model Context Protocol) server for Google services. Currently supports Gmail with 15 tools for email management. More Google services coming soon.
+MCP (Model Context Protocol) server for Google services. Provides Gmail and Google Calendar integration with 19 tools for email management and calendar operations.
 
 ## Gmail Tools
 
@@ -29,11 +29,20 @@ MCP (Model Context Protocol) server for Google services. Currently supports Gmai
 | `gmcp_gmail_modify_labels` | Add/remove labels on a message |
 | `gmcp_gmail_batch_modify` | Batch label operations on multiple messages |
 
+## Calendar Tools
+
+| Tool | Description |
+|------|-------------|
+| `gmcp_calendar_list_calendars` | List all calendars for account |
+| `gmcp_calendar_list_events` | List events with filters (time range, query, calendar) |
+| `gmcp_calendar_get_event` | Get single event by ID |
+| `gmcp_calendar_create_event` | Create event (supports recurring events, Google Meet) |
+
 ## Setup
 
 ### Prerequisites
 
-1. **Google Cloud Project** with Gmail API enabled
+1. **Google Cloud Project** with Gmail API and Calendar API enabled
 2. **OAuth 2.0 Client ID** (Desktop Application type)
    - Create at [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
    - Download credentials JSON file
@@ -48,9 +57,9 @@ bun install
 cp .env.example .env
 
 # Edit .env with your paths
-# GMAIL_CREDENTIALS_PATH=/path/to/credentials.json
-# GMAIL_TOKEN_PATH=/path/to/token.json
-# GMAIL_SCOPES=gmail.readonly
+# GOOGLE_CREDENTIALS_PATH=/path/to/credentials.json
+# GOOGLE_TOKEN_PATH=/path/to/token.json
+# GOOGLE_SCOPES=gmail.readonly,calendar.readonly
 ```
 
 ### Authenticate
@@ -83,9 +92,9 @@ The server runs via stdio and is ready to accept MCP requests.
 
 | Variable | Description |
 |----------|-------------|
-| `GMAIL_CREDENTIALS_PATH` | Path to OAuth2 credentials JSON from Google Cloud Console |
-| `GMAIL_TOKEN_PATH` | Path where OAuth2 tokens will be stored |
-| `GMAIL_SCOPES` | Comma-separated Gmail API scopes (short names or full URLs) |
+| `GOOGLE_CREDENTIALS_PATH` | Path to OAuth2 credentials JSON from Google Cloud Console |
+| `GOOGLE_TOKEN_PATH` | Path where OAuth2 tokens will be stored |
+| `GOOGLE_SCOPES` | Comma-separated Gmail and Calendar API scopes (short names or full URLs) |
 
 ### Gmail Scopes
 
@@ -97,19 +106,29 @@ The server runs via stdio and is ready to accept MCP requests.
 | `gmail.send` | Send messages | Send email, reply |
 | `gmail.compose` | Create drafts and send | Send email, reply, create draft |
 
-**Examples**:
+### Calendar Scopes
+
+| Short Name | Description | Required For |
+|------------|-------------|--------------|
+| `calendar.readonly` | Read-only calendar access | List calendars, list events, get event |
+| `calendar.events.readonly` | Read-only events access | List events, get event |
+| `calendar.events` | Manage events | Create event, list events, get event |
+| `calendar` | Full calendar access | All calendar tools |
+
+### Scope Examples
+
 ```bash
-# Read-only (default)
-GMAIL_SCOPES=gmail.readonly
+# Gmail read-only
+GOOGLE_SCOPES=gmail.readonly
 
-# Read and send
-GMAIL_SCOPES=gmail.readonly,gmail.send
+# Gmail and Calendar read-only
+GOOGLE_SCOPES=gmail.readonly,calendar.readonly
 
-# Read, send, and manage labels
-GMAIL_SCOPES=gmail.readonly,gmail.send,gmail.labels
+# Gmail read/send + Calendar read/create
+GOOGLE_SCOPES=gmail.readonly,gmail.send,calendar.events
 
 # Full access (all tools)
-GMAIL_SCOPES=gmail.readonly,gmail.modify,gmail.send,gmail.labels
+GOOGLE_SCOPES=gmail.readonly,gmail.modify,gmail.send,gmail.labels,calendar
 ```
 
 ## Claude Desktop Integration
@@ -123,9 +142,9 @@ Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_
       "command": "bun",
       "args": ["run", "/path/to/gmcp/src/index.ts"],
       "env": {
-        "GMAIL_CREDENTIALS_PATH": "/path/to/credentials.json",
-        "GMAIL_TOKEN_PATH": "/path/to/token.json",
-        "GMAIL_SCOPES": "gmail.readonly,gmail.send,gmail.labels"
+        "GOOGLE_CREDENTIALS_PATH": "/path/to/credentials.json",
+        "GOOGLE_TOKEN_PATH": "/path/to/token.json",
+        "GOOGLE_SCOPES": "gmail.readonly,gmail.send,gmail.labels,calendar.events"
       }
     }
   }
@@ -141,9 +160,9 @@ docker build -t gmcp-server .
 docker run -i \
   -v /path/to/credentials.json:/app/data/credentials.json:ro \
   -v /path/to/token.json:/app/data/token.json \
-  -e GMAIL_CREDENTIALS_PATH=/app/data/credentials.json \
-  -e GMAIL_TOKEN_PATH=/app/data/token.json \
-  -e GMAIL_SCOPES=gmail.readonly,gmail.labels,gmail.send \
+  -e GOOGLE_CREDENTIALS_PATH=/app/data/credentials.json \
+  -e GOOGLE_TOKEN_PATH=/app/data/token.json \
+  -e GOOGLE_SCOPES=gmail.readonly,gmail.labels,gmail.send,calendar.events \
   gmcp-server
 ```
 
@@ -155,9 +174,9 @@ Test with MCP Inspector:
 bunx @modelcontextprotocol/inspector bun run start
 ```
 
-## Roadmap
+## Future Enhancements
 
-Currently supports Gmail. More Google services (Calendar, Drive, Sheets, etc.) planned for future releases.
+Potential additions include Google Drive, Google Sheets, and other Google Workspace services.
 
 ## License
 
