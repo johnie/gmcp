@@ -13,9 +13,9 @@ COPY --from=install /app/node_modules ./node_modules
 COPY . .
 
 # Set environment variables (override these when running)
-ENV GMAIL_CREDENTIALS_PATH=/app/data/credentials.json
-ENV GMAIL_TOKEN_PATH=/app/data/token.json
-ENV GMAIL_SCOPES=gmail.readonly
+ENV GOOGLE_CREDENTIALS_PATH=/app/data/credentials.json
+ENV GOOGLE_TOKEN_PATH=/app/data/token.json
+ENV GOOGLE_SCOPES=gmail.readonly,calendar.readonly
 
 # Create data directory for credentials and tokens
 RUN mkdir -p /app/data
