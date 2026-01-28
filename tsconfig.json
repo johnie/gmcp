@@ -6,7 +6,6 @@
     "module": "Preserve",
     "moduleDetection": "force",
     "jsx": "react-jsx",
-    "allowJs": true,
 
     // Path aliases
     "paths": {
@@ -21,7 +20,6 @@
 
     // Declaration output (used by build script with --noEmit false)
     "declaration": true,
-    "isolatedDeclarations": true,
     "declarationDir": "dist",
     "outDir": "dist",
 
