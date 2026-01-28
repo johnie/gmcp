@@ -1,9 +1,10 @@
-#!/usr/bin/env bun
+#!/usr/bin/env node
 /**
  * OAuth2 CLI for GMCP Server
  * Run this to authenticate and save tokens: bun run auth
  */
 
+import { createInterface } from "node:readline";
 import {
   createOAuth2Client,
   getAuthUrl,
@@ -12,6 +13,20 @@ import {
   loadCredentials,
   saveTokens,
 } from "@/auth.ts";
+
+function readLine(): Promise<string> {
+  const rl = createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+
+  return new Promise((resolve) => {
+    rl.on("line", (line) => {
+      rl.close();
+      resolve(line.trim());
+    });
+  });
+}
 
 async function main() {
   console.log("GMCP Server - OAuth2 Authentication\n");
@@ -54,24 +69,7 @@ async function main() {
   console.log("========================================");
 
   // Read from stdin
-  const reader = Bun.stdin.stream().getReader();
-  const decoder = new TextDecoder();
-  let code = "";
-
-  while (true) {
-    const { value, done } = await reader.read();
-    if (done) {
-      break;
-    }
-
-    const chunk = decoder.decode(value);
-    code += chunk;
-
-    if (code.includes("\n")) {
-      code = code.trim();
-      break;
-    }
-  }
+  const code = await readLine();
 
   if (!code) {
     console.error("Error: No authorization code provided");
@@ -87,7 +85,7 @@ async function main() {
     await saveTokens(tokenPath, tokens);
 
     console.log("\x1b[32m%s\x1b[0m", "\nSuccess! Tokens saved to", tokenPath);
-    console.log("\nYou can now run the MCP server with: bun run start");
+    console.log("\nYou can now run the MCP server with: npx gmcp");
   } catch (error) {
     console.error("\x1b[31m%s\x1b[0m", "\nError exchanging code for tokens:");
     console.error(error);
