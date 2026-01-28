@@ -21,6 +21,11 @@ import {
   SEND_ANNOTATIONS,
 } from "@/tool-registry.ts";
 import {
+  ARCHIVE_EMAIL_DESCRIPTION,
+  ArchiveEmailInputSchema,
+  archiveEmailTool,
+} from "@/tools/archive-email.ts";
+import {
   BATCH_MODIFY_DESCRIPTION,
   BatchModifyInputSchema,
   batchModifyTool,
@@ -288,6 +293,14 @@ export async function startServer(): Promise<void> {
       inputSchema: DeleteEmailInputSchema,
       annotations: DESTRUCTIVE_ANNOTATIONS,
       handler: deleteEmailTool,
+    },
+    {
+      name: "gmcp_gmail_archive_email",
+      title: "Archive Gmail Email",
+      description: ARCHIVE_EMAIL_DESCRIPTION,
+      inputSchema: ArchiveEmailInputSchema,
+      annotations: MODIFY_ANNOTATIONS,
+      handler: archiveEmailTool,
     },
   ] as ToolDefinition<unknown>[];
 
