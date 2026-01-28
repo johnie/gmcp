@@ -4,7 +4,7 @@
  * Run this to authenticate and save tokens: bun run auth
  */
 
-import { createInterface } from "node:readline";
+import { input } from "@inquirer/prompts";
 import kleur from "kleur";
 import {
   createOAuth2Client,
@@ -14,20 +14,6 @@ import {
   loadCredentials,
   saveTokens,
 } from "@/auth.ts";
-
-function readLine(): Promise<string> {
-  const rl = createInterface({
-    input: process.stdin,
-    output: process.stdout,
-  });
-
-  return new Promise((resolve) => {
-    rl.on("line", (line) => {
-      rl.close();
-      resolve(line.trim());
-    });
-  });
-}
 
 export async function runAuth(): Promise<void> {
   console.log("GMCP Server - OAuth2 Authentication\n");
@@ -67,15 +53,18 @@ export async function runAuth(): Promise<void> {
   );
   console.log("\n========================================");
   console.log("STEP 3: Paste the authorization code below:");
-  console.log("========================================");
+  console.log("========================================\n");
 
-  // Read from stdin
-  const code = await readLine();
-
-  if (!code) {
-    console.error("Error: No authorization code provided");
-    process.exit(1);
-  }
+  const code = await input({
+    message: "Authorization code:",
+    required: true,
+    validate: (value) => {
+      if (value.length < 10) {
+        return "Authorization code appears too short";
+      }
+      return true;
+    },
+  });
 
   // Exchange code for tokens
   console.log("\nExchanging authorization code for tokens...");
