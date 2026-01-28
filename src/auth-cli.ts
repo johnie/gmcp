@@ -28,7 +28,7 @@ function readLine(): Promise<string> {
   });
 }
 
-async function main() {
+export async function runAuth(): Promise<void> {
   console.log("GMCP Server - OAuth2 Authentication\n");
 
   // Get configuration
@@ -92,9 +92,3 @@ async function main() {
     process.exit(1);
   }
 }
-
-main().catch((error) => {
-  console.error("\x1b[31m%s\x1b[0m", "Fatal error:");
-  console.error(error);
-  process.exit(1);
-});
