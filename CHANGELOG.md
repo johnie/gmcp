@@ -1,5 +1,11 @@
 # gmcp
 
+## 0.3.0
+
+### Minor Changes
+
+- [#14](https://github.com/johnie/gmcp/pull/14) [`7342f28`](https://github.com/johnie/gmcp/commit/7342f2851c2e30236501e172061bfc4f6ebe4d7f) Thanks [@johnie](https://github.com/johnie)! - Replace hand-rolled CLI with Stricli framework for improved type safety and maintainability. The auth command now uses Inquirer prompts for better UX with built-in validation and visual feedback during the OAuth flow.
+
 ## 0.2.1
 
 ### Patch Changes
