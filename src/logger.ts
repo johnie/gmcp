@@ -26,11 +26,11 @@ export function createLogger(options: CreateLoggerOptions = {}): Logger {
         },
       },
     }),
-    ...(!pretty && {
-      // For non-pretty mode, also use stderr
-      destination: pino.destination(2),
-    }),
   };
+
+  if (!pretty) {
+    return pino(pinoOptions, pino.destination(2));
+  }
 
   return pino(pinoOptions);
 }
