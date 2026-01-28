@@ -1,5 +1,20 @@
 # gmcp
 
+## 0.2.1
+
+### Patch Changes
+
+- [#12](https://github.com/johnie/gmcp/pull/12) [`545738c`](https://github.com/johnie/gmcp/commit/545738c13ec8c6c2c92c2abb0b4342f6c97e5ec8) Thanks [@johnie](https://github.com/johnie)! - Unify CLI commands into single `gmcp` entry point
+
+  - `npx gmcp` or `npx gmcp start` - Start the MCP server (default)
+  - `npx gmcp auth` - Run OAuth2 authentication flow
+  - `npx gmcp --help` - Show usage information
+  - `npx gmcp --version` - Show version number
+
+  The previous `gmcp-auth` command has been removed. Use `gmcp auth` instead.
+
+  Version is now dynamically read from package.json for consistent reporting.
+
 ## 0.2.0
 
 ### Minor Changes
