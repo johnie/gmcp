@@ -21,6 +21,9 @@
   "scripts": {
     "start": "bun run src/cli.ts",
     "auth": "bun run src/cli.ts auth",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "build": "bunup",
     "prepublishOnly": "bun run build",
     "prepare": "lefthook install",
@@ -62,6 +65,7 @@
     "@types/json2md": "^1.5.4",
     "bunup": "^0.16.20",
     "lefthook": "^2.0.16",
+    "msw": "^2.12.7",
     "ultracite": "7.1.1",
     "vitest": "^4.0.18"
   },
