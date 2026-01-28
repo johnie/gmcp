@@ -148,7 +148,7 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
 
 ## Tools
 
-### Gmail (16 tools)
+### Gmail (17 tools)
 
 | Tool | Description |
 |------|-------------|
@@ -161,6 +161,7 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
 | `gmcp_gmail_reply` | Reply to email in thread |
 | `gmcp_gmail_create_draft` | Create draft message |
 | `gmcp_gmail_delete_email` | Permanently delete email (bypasses trash) |
+| `gmcp_gmail_archive_email` | Archive email (remove from inbox) |
 | `gmcp_gmail_list_labels` | List all labels |
 | `gmcp_gmail_get_label` | Get label details |
 | `gmcp_gmail_create_label` | Create custom label |
