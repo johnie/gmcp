@@ -6,7 +6,6 @@
     "module": "Preserve",
     "moduleDetection": "force",
     "jsx": "react-jsx",
-    "allowJs": true,
 
     // Path aliases
     "paths": {
@@ -19,6 +18,11 @@
     "verbatimModuleSyntax": true,
     "noEmit": true,
 
+    // Declaration output (used by build script with --noEmit false)
+    "declaration": true,
+    "declarationDir": "dist",
+    "outDir": "dist",
+
     // Best practices
     "strict": true,
     "skipLibCheck": true,
@@ -30,5 +34,6 @@
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noPropertyAccessFromIndexSignature": false
-  }
+  },
+  "include": ["src/**/*.ts"]
 }
