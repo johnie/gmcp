@@ -5,6 +5,7 @@
  */
 
 import { createInterface } from "node:readline";
+import kleur from "kleur";
 import {
   createOAuth2Client,
   getAuthUrl,
@@ -49,7 +50,7 @@ export async function runAuth(): Promise<void> {
   console.log("\n========================================");
   console.log("STEP 1: Visit this URL to authorize:");
   console.log("========================================");
-  console.log("\x1b[36m%s\x1b[0m", authUrl);
+  console.log(kleur.cyan(authUrl));
   console.log("\n========================================");
   console.log("STEP 2: After authorizing:");
   console.log("========================================");
@@ -84,10 +85,10 @@ export async function runAuth(): Promise<void> {
     // Save tokens
     await saveTokens(tokenPath, tokens);
 
-    console.log("\x1b[32m%s\x1b[0m", "\nSuccess! Tokens saved to", tokenPath);
+    console.log(kleur.green(`\nSuccess! Tokens saved to ${tokenPath}`));
     console.log("\nYou can now run the MCP server with: npx gmcp");
   } catch (error) {
-    console.error("\x1b[31m%s\x1b[0m", "\nError exchanging code for tokens:");
+    console.error(kleur.red("\nError exchanging code for tokens:"));
     console.error(error);
     process.exit(1);
   }
