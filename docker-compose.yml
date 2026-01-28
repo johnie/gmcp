@@ -1,0 +1,12 @@
+services:
+  gmcp:
+    build: .
+    image: gmcp:local
+    volumes:
+      - ./data:/app/data:ro
+    environment:
+      - GOOGLE_CREDENTIALS_PATH=/app/data/credentials.json
+      - GOOGLE_TOKEN_PATH=/app/data/token.json
+      - GOOGLE_SCOPES=gmail.readonly,calendar.readonly
+    stdin_open: true
+    restart: unless-stopped
