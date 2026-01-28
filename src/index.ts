@@ -115,14 +115,16 @@ import {
   UpdateLabelInputSchema,
   updateLabelTool,
 } from "@/tools/update-label.ts";
+import { getVersion } from "@/version.ts";
 
 /**
  * Main server initialization
  */
-async function main() {
+export async function startServer(): Promise<void> {
   const logger = createLogger();
+  const version = await getVersion();
 
-  logger.info({ version: "1.0.0" }, "GMCP Server starting");
+  logger.info({ version }, "GMCP Server starting");
 
   const { credentialsPath, tokenPath, scopes } = getEnvConfig();
 
@@ -150,7 +152,7 @@ async function main() {
 
   const server = new McpServer({
     name: "gmcp-server",
-    version: "1.0.0",
+    version,
   });
 
   const tools = [
@@ -330,15 +332,3 @@ async function main() {
   logger.info("MCP server connected via stdio");
   logger.info("Ready to accept requests");
 }
-
-main().catch((error) => {
-  const logger = createLogger();
-  logger.error(
-    {
-      error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined,
-    },
-    "Fatal error"
-  );
-  process.exit(1);
-});

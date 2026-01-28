@@ -7,8 +7,7 @@
   "types": "dist/index.d.ts",
   "type": "module",
   "bin": {
-    "gmcp": "dist/index.js",
-    "gmcp-auth": "dist/auth-cli.js"
+    "gmcp": "dist/cli.js"
   },
   "files": [
     "dist"
@@ -20,8 +19,8 @@
     }
   },
   "scripts": {
-    "start": "bun run src/index.ts",
-    "auth": "bun run src/auth-cli.ts",
+    "start": "bun run src/cli.ts",
+    "auth": "bun run src/cli.ts auth",
     "build": "bunup",
     "prepublishOnly": "bun run build",
     "prepare": "lefthook install",

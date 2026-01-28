@@ -2,7 +2,7 @@ import { chmod, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { defineConfig } from "bunup";
 
-const binFiles = ["index.js", "auth-cli.js"];
+const binFiles = ["cli.js"];
 
 async function addShebangs() {
   const shebang = "#!/usr/bin/env node\n";
@@ -17,7 +17,7 @@ async function addShebangs() {
 }
 
 export default defineConfig({
-  entry: ["src/index.ts", "src/auth-cli.ts"],
+  entry: ["src/cli.ts", "src/index.ts", "src/auth-cli.ts"],
   outDir: "dist",
   format: "esm",
   target: "node",
