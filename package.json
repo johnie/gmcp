@@ -4,7 +4,6 @@
   "description": "GMCP Server for Google Workspace with OAuth2 authentication",
   "module": "src/index.ts",
   "type": "module",
-  "private": true,
   "scripts": {
     "start": "bun run src/index.ts",
     "auth": "bun run src/auth-cli.ts",
