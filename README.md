@@ -10,7 +10,6 @@
 <p align="center">
 <a href="https://www.npmjs.com/package/gmcp" rel="nofollow"><img src="https://img.shields.io/npm/v/gmcp.svg" alt="npm"></a>
 <a href="https://hub.docker.com/r/johnie/gmcp" rel="nofollow"><img src="https://img.shields.io/docker/pulls/johnie/gmcp" alt="Docker Pulls"></a>
-<a href="https://opensource.org/licenses/MIT" rel="nofollow"><img src="https://img.shields.io/github/license/johnie/gmcp" alt="License"></a>
 <a href="https://github.com/johnie/gmcp" rel="nofollow"><img src="https://img.shields.io/github/stars/johnie/gmcp" alt="stars"></a>
 </p>
 
@@ -61,10 +60,10 @@ bun install
 
 ```bash
 # If installed globally
-gmcp-auth
+gmcp auth
 
 # Or with npx
-npx gmcp-auth
+npx gmcp auth
 
 # Or from source
 bun run auth
@@ -76,10 +75,11 @@ Follow the prompts to authorize. The browser will show "connection refused" afte
 
 ```bash
 # Globally installed
-gmcp
+gmcp start
+# or just: gmcp
 
 # With npx
-npx gmcp
+npx gmcp start
 
 # From source
 bun run start
@@ -135,7 +135,7 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
   "mcpServers": {
     "gmcp": {
       "command": "bun",
-      "args": ["run", "/path/to/gmcp/src/index.ts"],
+      "args": ["run", "/path/to/gmcp/src/cli.ts"],
       "env": {
         "GOOGLE_CREDENTIALS_PATH": "/path/to/credentials.json",
         "GOOGLE_TOKEN_PATH": "/path/to/token.json",
@@ -208,6 +208,20 @@ GOOGLE_SCOPES=gmail.readonly,calendar.readonly
 
 # Full access
 GOOGLE_SCOPES=gmail.readonly,gmail.modify,gmail.send,calendar.events
+```
+
+## CLI Reference
+
+```
+gmcp [command]
+
+Commands:
+  start    Start MCP server (default)
+  auth     Run OAuth2 authentication flow
+
+Options:
+  --help, -h       Show usage
+  --version, -v    Show version
 ```
 
 ## Testing
