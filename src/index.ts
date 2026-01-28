@@ -56,6 +56,11 @@ import {
   createLabelTool,
 } from "@/tools/create-label.ts";
 import {
+  DELETE_EMAIL_DESCRIPTION,
+  DeleteEmailInputSchema,
+  deleteEmailTool,
+} from "@/tools/delete-email.ts";
+import {
   DELETE_LABEL_DESCRIPTION,
   DeleteLabelInputSchema,
   deleteLabelTool,
@@ -275,6 +280,14 @@ export async function startServer(): Promise<void> {
       inputSchema: DeleteLabelInputSchema,
       annotations: DESTRUCTIVE_ANNOTATIONS,
       handler: deleteLabelTool,
+    },
+    {
+      name: "gmcp_gmail_delete_email",
+      title: "Delete Gmail Email",
+      description: DELETE_EMAIL_DESCRIPTION,
+      inputSchema: DeleteEmailInputSchema,
+      annotations: DESTRUCTIVE_ANNOTATIONS,
+      handler: deleteEmailTool,
     },
   ] as ToolDefinition<unknown>[];
 
