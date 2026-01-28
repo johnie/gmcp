@@ -1,5 +1,23 @@
 # gmcp
 
+## 0.4.0
+
+### Minor Changes
+
+- [#16](https://github.com/johnie/gmcp/pull/16) [`b62fde8`](https://github.com/johnie/gmcp/commit/b62fde8705bc09f95577784c6e236c453176d6d1) Thanks [@johnie](https://github.com/johnie)! - Add `gmcp_gmail_delete_email` tool for permanently deleting emails from Gmail.
+
+  **Commits:**
+
+  - feat(gmail): add delete email tool
+  - chore(deps): update pino, biome, lefthook, ultracite
+  - docs: add delete email tool to README
+
+  **What's new:**
+
+  - New `gmcp_gmail_delete_email` tool that permanently deletes emails (bypasses trash)
+  - Requires `gmail.modify` scope
+  - Marked as destructive operation with appropriate MCP annotations
+
 ## 0.3.0
 
 ### Minor Changes
