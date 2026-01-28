@@ -4,7 +4,8 @@
  * Run this to authenticate and save tokens: bun run auth
  */
 
-import { createInterface } from "node:readline";
+import { input } from "@inquirer/prompts";
+import kleur from "kleur";
 import {
   createOAuth2Client,
   getAuthUrl,
@@ -13,20 +14,6 @@ import {
   loadCredentials,
   saveTokens,
 } from "@/auth.ts";
-
-function readLine(): Promise<string> {
-  const rl = createInterface({
-    input: process.stdin,
-    output: process.stdout,
-  });
-
-  return new Promise((resolve) => {
-    rl.on("line", (line) => {
-      rl.close();
-      resolve(line.trim());
-    });
-  });
-}
 
 export async function runAuth(): Promise<void> {
   console.log("GMCP Server - OAuth2 Authentication\n");
@@ -49,7 +36,7 @@ export async function runAuth(): Promise<void> {
   console.log("\n========================================");
   console.log("STEP 1: Visit this URL to authorize:");
   console.log("========================================");
-  console.log("\x1b[36m%s\x1b[0m", authUrl);
+  console.log(kleur.cyan(authUrl));
   console.log("\n========================================");
   console.log("STEP 2: After authorizing:");
   console.log("========================================");
@@ -66,15 +53,18 @@ export async function runAuth(): Promise<void> {
   );
   console.log("\n========================================");
   console.log("STEP 3: Paste the authorization code below:");
-  console.log("========================================");
+  console.log("========================================\n");
 
-  // Read from stdin
-  const code = await readLine();
-
-  if (!code) {
-    console.error("Error: No authorization code provided");
-    process.exit(1);
-  }
+  const code = await input({
+    message: "Authorization code:",
+    required: true,
+    validate: (value) => {
+      if (value.length < 10) {
+        return "Authorization code appears too short";
+      }
+      return true;
+    },
+  });
 
   // Exchange code for tokens
   console.log("\nExchanging authorization code for tokens...");
@@ -84,10 +74,10 @@ export async function runAuth(): Promise<void> {
     // Save tokens
     await saveTokens(tokenPath, tokens);
 
-    console.log("\x1b[32m%s\x1b[0m", "\nSuccess! Tokens saved to", tokenPath);
+    console.log(kleur.green(`\nSuccess! Tokens saved to ${tokenPath}`));
     console.log("\nYou can now run the MCP server with: npx gmcp");
   } catch (error) {
-    console.error("\x1b[31m%s\x1b[0m", "\nError exchanging code for tokens:");
+    console.error(kleur.red("\nError exchanging code for tokens:"));
     console.error(error);
     process.exit(1);
   }
