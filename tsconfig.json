@@ -19,6 +19,12 @@
     "verbatimModuleSyntax": true,
     "noEmit": true,
 
+    // Declaration output (used by build script with --noEmit false)
+    "declaration": true,
+    "isolatedDeclarations": true,
+    "declarationDir": "dist",
+    "outDir": "dist",
+
     // Best practices
     "strict": true,
     "skipLibCheck": true,
@@ -30,5 +36,6 @@
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noPropertyAccessFromIndexSignature": false
-  }
+  },
+  "include": ["src/**/*.ts"]
 }

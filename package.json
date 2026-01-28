@@ -3,22 +3,56 @@
   "version": "0.1.0",
   "description": "GMCP Server for Google Workspace with OAuth2 authentication",
   "module": "src/index.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "type": "module",
+  "bin": {
+    "gmcp": "dist/index.js",
+    "gmcp-auth": "dist/auth-cli.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
   "scripts": {
     "start": "bun run src/index.ts",
     "auth": "bun run src/auth-cli.ts",
+    "build": "bunup",
+    "prepublishOnly": "bun run build",
     "prepare": "lefthook install"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/johnie/gmcp.git"
+  },
+  "author": "Johnie Hjelm",
+  "license": "MIT",
+  "keywords": [
+    "mcp",
+    "gmail",
+    "calendar",
+    "google",
+    "oauth2",
+    "anthropic"
+  ],
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.25.3",
     "googleapis": "^170.1.0",
     "json2md": "^2.0.3",
+    "pino": "^9.7.0",
+    "pino-pretty": "^13.0.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {
     "@biomejs/biome": "2.3.12",
     "@types/bun": "latest",
     "@types/json2md": "^1.5.4",
+    "bunup": "^0.16.20",
     "lefthook": "^2.0.15",
     "ultracite": "7.0.12",
     "vitest": "^4.0.18"
