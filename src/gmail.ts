@@ -103,6 +103,8 @@ export interface GmailClient {
   ): Promise<GmailLabel>;
 
   deleteLabel(labelId: string): Promise<void>;
+
+  deleteEmail(messageId: string): Promise<void>;
 }
 
 /**
@@ -851,6 +853,21 @@ export function createGmailClient(
         });
       } catch (error) {
         throw new Error(`Failed to delete label ${labelId}: ${error}`);
+      }
+    },
+
+    /**
+     * Permanently delete an email message
+     * Note: This bypasses trash and immediately deletes the message
+     */
+    async deleteEmail(messageId: string): Promise<void> {
+      try {
+        await gmail.users.messages.delete({
+          userId: "me",
+          id: messageId,
+        });
+      } catch (error) {
+        throw new Error(`Failed to delete message ${messageId}: ${error}`);
       }
     },
   };
