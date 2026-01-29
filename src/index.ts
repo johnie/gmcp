@@ -128,6 +128,18 @@ import {
 import { getVersion } from "@/version.ts";
 
 /**
+ * Type aliases for tool definitions with proper client types
+ */
+type GmailToolDefinition = ToolDefinition<
+  unknown,
+  ReturnType<typeof createGmailClient>
+>;
+type CalendarToolDefinition = ToolDefinition<
+  unknown,
+  ReturnType<typeof createCalendarClient>
+>;
+
+/**
  * Main server initialization
  */
 export async function startServer(): Promise<void> {
@@ -302,7 +314,7 @@ export async function startServer(): Promise<void> {
       annotations: MODIFY_ANNOTATIONS,
       handler: archiveEmailTool,
     },
-  ] as ToolDefinition<unknown>[];
+  ] as GmailToolDefinition[];
 
   const calendarTools = [
     {
@@ -337,7 +349,7 @@ export async function startServer(): Promise<void> {
       annotations: SEND_ANNOTATIONS,
       handler: calendarCreateEventTool,
     },
-  ] as ToolDefinition<unknown>[];
+  ] as CalendarToolDefinition[];
 
   registerTools(server, gmailClient, tools, logger);
   registerTools(server, calendarClient, calendarTools, logger);
