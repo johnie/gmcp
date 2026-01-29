@@ -6,11 +6,12 @@ import type { Logger } from "pino";
 
 /**
  * MCP tool response type
+ * Note: Index signature required by MCP SDK's registerTool callback return type
  */
 export interface ToolResponse {
   [x: string]: unknown;
   content: Array<{ type: "text"; text: string }>;
-  structuredContent?: { [x: string]: unknown };
+  structuredContent?: Record<string, unknown>;
   isError?: boolean;
 }
 
@@ -76,7 +77,7 @@ export function createErrorResponse(
  */
 export function createSuccessResponse(
   textContent: string,
-  structuredContent?: { [x: string]: unknown }
+  structuredContent?: Record<string, unknown>
 ): ToolResponse {
   return {
     content: [{ type: "text", text: textContent }],
