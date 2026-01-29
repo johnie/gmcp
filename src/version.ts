@@ -2,6 +2,8 @@ import { readFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
+declare const __GMCP_VERSION__: string | undefined;
+
 async function findPackageJson(startDir: string): Promise<string> {
   let dir = startDir;
   let prevDir = "";
@@ -25,6 +27,11 @@ async function findPackageJson(startDir: string): Promise<string> {
 }
 
 export async function getVersion(): Promise<string> {
+  // Use compile-time constant if available (Docker binary)
+  if (typeof __GMCP_VERSION__ !== "undefined") {
+    return __GMCP_VERSION__;
+  }
+
   const __dirname = dirname(fileURLToPath(import.meta.url));
   const packagePath = await findPackageJson(__dirname);
   const content = await readFile(packagePath, "utf8");
