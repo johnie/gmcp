@@ -1,36 +1,29 @@
 # GMCP Server Dockerfile
-# Multi-stage build following Bun best practices
+# Multi-stage build: compile to standalone binary, run on distroless
 
-FROM oven/bun:1 AS base
+FROM oven/bun:1 AS build
 WORKDIR /app
 
-# Install production dependencies only
-FROM base AS install
+# Install dependencies
 COPY package.json bun.lock ./
-# --ignore-scripts: Skip prepare script (lefthook needs git)
-# --frozen-lockfile: Ensure lockfile matches
-# --production: Exclude devDependencies
-RUN bun install --frozen-lockfile --ignore-scripts --production
+RUN bun install --frozen-lockfile --ignore-scripts
 
-# Release stage
-FROM base AS release
-
-# Set production environment
-ENV NODE_ENV=production
-
-# Copy production node_modules
-COPY --from=install /app/node_modules ./node_modules
-
-# Copy source and config files
-# tsconfig.json required for @/ path alias resolution at runtime
+# Copy source and config
 COPY src ./src
-COPY tsconfig.json package.json ./
+COPY tsconfig.json ./
 
-# Create data directory for credentials and tokens
-RUN mkdir -p /app/data
+# Compile to standalone binary with version injected
+ARG VERSION=0.0.0
+RUN bun build --compile --minify \
+    --define "__GMCP_VERSION__='\"${VERSION}\"'" \
+    ./src/index.ts --outfile /app/gmcp-server
 
-# Run as non-root user (bun user exists in base image)
-USER bun
+# Minimal runtime image
+FROM gcr.io/distroless/cc-debian12
 
-# Run MCP server
-CMD ["bun", "run", "src/index.ts"]
+COPY --from=build /app/gmcp-server /gmcp-server
+
+# Run as non-root (distroless nonroot user)
+USER 65532
+
+ENTRYPOINT ["/gmcp-server"]

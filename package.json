@@ -25,6 +25,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "build": "bunup",
+    "build:docker": "bun build --compile --minify ./src/index.ts --outfile gmcp-server",
     "prepublishOnly": "bun run build",
     "prepare": "lefthook install",
     "changeset": "changeset",
