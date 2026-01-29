@@ -5,6 +5,7 @@
 import json2md from "json2md";
 import { z } from "zod";
 import type { GmailClient } from "@/gmail.ts";
+import { OutputFormatSchema } from "@/schemas/shared.ts";
 import { createErrorResponse } from "@/utils/tool-helpers.ts";
 
 /**
@@ -15,10 +16,7 @@ export const GetLabelInputSchema = z.object({
     .string()
     .min(1, "Label ID cannot be empty")
     .describe("The label ID to retrieve (e.g., 'INBOX', 'Label_123')"),
-  output_format: z
-    .enum(["markdown", "json"])
-    .default("markdown")
-    .describe("Output format: markdown (default) or json"),
+  output_format: OutputFormatSchema,
 });
 
 export type GetLabelInput = z.infer<typeof GetLabelInputSchema>;

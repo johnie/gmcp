@@ -5,6 +5,7 @@
 import json2md from "json2md";
 import { z } from "zod";
 import type { GmailClient } from "@/gmail.ts";
+import { OutputFormatSchema } from "@/schemas/shared.ts";
 import { createErrorResponse } from "@/utils/tool-helpers.ts";
 
 /**
@@ -35,10 +36,7 @@ export const ReplyInputSchema = z.object({
     .describe(
       "Set to true to confirm and send the reply. If false, returns preview only."
     ),
-  output_format: z
-    .enum(["markdown", "json"])
-    .default("markdown")
-    .describe("Output format: markdown (default) or json"),
+  output_format: OutputFormatSchema,
 });
 
 export type ReplyInput = z.infer<typeof ReplyInputSchema>;
@@ -60,7 +58,7 @@ function replyPreviewToMarkdown(
   const sections: json2md.DataObject[] = [
     { h1: "Reply Preview - NOT SENT" },
     {
-      p: "⚠️ **This reply has not been sent yet.** Set `confirm: true` to send.",
+      p: "**This reply has not been sent yet.** Set `confirm: true` to send.",
     },
     { h2: "Original Message" },
     {
@@ -98,7 +96,7 @@ function replySentToMarkdown(
   cc?: string
 ): string {
   const sections: json2md.DataObject[] = [
-    { h1: "✅ Reply Sent Successfully" },
+    { h1: "Reply Sent Successfully" },
     { h2: "Reply Details" },
     {
       ul: [

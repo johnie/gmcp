@@ -5,6 +5,7 @@
 import json2md from "json2md";
 import { z } from "zod";
 import type { GmailClient } from "@/gmail.ts";
+import { OutputFormatSchema } from "@/schemas/shared.ts";
 import {
   createErrorResponse,
   formatEmailForOutput,
@@ -30,10 +31,7 @@ export const ModifyLabelsInputSchema = z.object({
     .describe(
       "Label IDs to remove (e.g., ['UNREAD', 'INBOX'] to mark read and archive)"
     ),
-  output_format: z
-    .enum(["markdown", "json"])
-    .default("markdown")
-    .describe("Output format: markdown (default) or json"),
+  output_format: OutputFormatSchema,
 });
 
 export type ModifyLabelsInput = z.infer<typeof ModifyLabelsInputSchema>;

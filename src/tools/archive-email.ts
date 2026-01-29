@@ -5,6 +5,7 @@
 import json2md from "json2md";
 import { z } from "zod";
 import type { GmailClient } from "@/gmail.ts";
+import { OutputFormatSchema } from "@/schemas/shared.ts";
 import {
   createErrorResponse,
   formatEmailForOutput,
@@ -18,10 +19,7 @@ export const ArchiveEmailInputSchema = z.object({
     .string()
     .min(1, "Message ID cannot be empty")
     .describe("The Gmail message ID to archive"),
-  output_format: z
-    .enum(["markdown", "json"])
-    .default("markdown")
-    .describe("Output format: markdown (default) or json"),
+  output_format: OutputFormatSchema,
 });
 
 export type ArchiveEmailInput = z.infer<typeof ArchiveEmailInputSchema>;

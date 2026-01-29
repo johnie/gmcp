@@ -4,6 +4,7 @@
 
 import { z } from "zod";
 import type { CalendarClient } from "@/calendar.ts";
+import { OutputFormatSchema } from "@/schemas/shared.ts";
 import { eventToMarkdown } from "@/utils/markdown.ts";
 import { createErrorResponse } from "@/utils/tool-helpers.ts";
 
@@ -19,10 +20,7 @@ export const CalendarGetEventInputSchema = z.object({
     .string()
     .min(1, "Event ID is required")
     .describe("Event ID to retrieve"),
-  output_format: z
-    .enum(["markdown", "json"])
-    .default("markdown")
-    .describe("Output format: markdown (default) or json"),
+  output_format: OutputFormatSchema,
 });
 
 export type CalendarGetEventInput = z.infer<typeof CalendarGetEventInputSchema>;
