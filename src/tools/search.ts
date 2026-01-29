@@ -4,6 +4,7 @@
 
 import { z } from "zod";
 import type { GmailClient } from "@/gmail.ts";
+import { OutputFormatSchema } from "@/schemas/shared.ts";
 import { searchResultsToMarkdown } from "@/utils/markdown.ts";
 import {
   createErrorResponse,
@@ -35,10 +36,7 @@ export const SearchEmailsInputSchema = z.object({
     .string()
     .optional()
     .describe("Token for pagination to fetch next page of results"),
-  output_format: z
-    .enum(["markdown", "json"])
-    .default("markdown")
-    .describe("Output format: markdown (default) or json"),
+  output_format: OutputFormatSchema,
 });
 
 export type SearchEmailsInput = z.infer<typeof SearchEmailsInputSchema>;

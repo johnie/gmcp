@@ -5,6 +5,7 @@
 import json2md from "json2md";
 import { z } from "zod";
 import type { GmailClient } from "@/gmail.ts";
+import { OutputFormatSchema } from "@/schemas/shared.ts";
 import { createErrorResponse } from "@/utils/tool-helpers.ts";
 
 /**
@@ -36,10 +37,7 @@ export const CreateDraftInputSchema = z.object({
     .email("BCC must be a valid email address")
     .optional()
     .describe("BCC (blind carbon copy) email address"),
-  output_format: z
-    .enum(["markdown", "json"])
-    .default("markdown")
-    .describe("Output format: markdown (default) or json"),
+  output_format: OutputFormatSchema,
 });
 
 export type CreateDraftInput = z.infer<typeof CreateDraftInputSchema>;
@@ -57,7 +55,7 @@ function draftCreatedToMarkdown(
   result: { id: string; message: { id: string; threadId: string } }
 ): string {
   const sections: json2md.DataObject[] = [
-    { h1: "✅ Draft Created Successfully" },
+    { h1: "Draft Created Successfully" },
     { h2: "Draft Details" },
     {
       ul: [

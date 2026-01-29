@@ -5,6 +5,7 @@
 import type { OAuth2Client } from "google-auth-library";
 import { google } from "googleapis";
 import type { Logger } from "pino";
+import { AuthError, ConfigurationError } from "@/errors.ts";
 import type { OAuth2Credentials, StoredTokens } from "@/types.ts";
 import {
   OAuth2CredentialsSchema,
@@ -24,7 +25,11 @@ export async function loadCredentials(
     const parsed = JSON.parse(content);
     return OAuth2CredentialsSchema.parse(parsed);
   } catch (error) {
-    throw new Error(`Failed to load credentials from ${path}: ${error}`);
+    throw new AuthError(
+      "AUTH_CREDENTIAL_LOAD_FAILED",
+      `Failed to load credentials from ${path}: ${error instanceof Error ? error.message : String(error)}`,
+      error instanceof Error ? error : undefined
+    );
   }
 }
 
@@ -68,7 +73,11 @@ export async function saveTokens(
   try {
     await Bun.write(path, JSON.stringify(tokens, null, 2));
   } catch (error) {
-    throw new Error(`Failed to save tokens to ${path}: ${error}`);
+    throw new AuthError(
+      "AUTH_TOKEN_SAVE_FAILED",
+      `Failed to save tokens to ${path}: ${error instanceof Error ? error.message : String(error)}`,
+      error instanceof Error ? error : undefined
+    );
   }
 }
 
@@ -106,7 +115,10 @@ export async function getTokensFromCode(
   const { tokens } = await oauth2Client.getToken(code);
 
   if (!(tokens.access_token && tokens.refresh_token)) {
-    throw new Error("Failed to obtain access_token or refresh_token");
+    throw new AuthError(
+      "AUTH_TOKEN_INVALID",
+      "Failed to obtain access_token or refresh_token from OAuth2 code exchange"
+    );
   }
 
   return {
@@ -131,7 +143,8 @@ export async function createAuthenticatedClient(
 
   const tokens = await loadTokens(tokenPath, logger);
   if (!tokens) {
-    throw new Error(
+    throw new AuthError(
+      "AUTH_TOKEN_MISSING",
       `No tokens found at ${tokenPath}. Please run 'bun run auth' to authenticate first.`
     );
   }
@@ -171,11 +184,17 @@ export function getEnvConfig() {
   const scopesEnv = process.env.GOOGLE_SCOPES;
 
   if (!credentialsPath) {
-    throw new Error("GOOGLE_CREDENTIALS_PATH environment variable is required");
+    throw new ConfigurationError(
+      "CONFIG_MISSING_ENV",
+      "GOOGLE_CREDENTIALS_PATH environment variable is required"
+    );
   }
 
   if (!tokenPath) {
-    throw new Error("GOOGLE_TOKEN_PATH environment variable is required");
+    throw new ConfigurationError(
+      "CONFIG_MISSING_ENV",
+      "GOOGLE_TOKEN_PATH environment variable is required"
+    );
   }
 
   const scopes = parseScopes(scopesEnv);

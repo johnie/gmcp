@@ -4,26 +4,9 @@
 
 import json2md from "json2md";
 import { z } from "zod";
+import { GMAIL_SYSTEM_LABELS } from "@/constants.ts";
 import type { GmailClient } from "@/gmail.ts";
-
-/**
- * System labels that cannot be deleted
- */
-const SYSTEM_LABELS = [
-  "INBOX",
-  "SENT",
-  "DRAFT",
-  "TRASH",
-  "SPAM",
-  "STARRED",
-  "IMPORTANT",
-  "UNREAD",
-  "CATEGORY_PERSONAL",
-  "CATEGORY_SOCIAL",
-  "CATEGORY_PROMOTIONS",
-  "CATEGORY_UPDATES",
-  "CATEGORY_FORUMS",
-];
+import { OutputFormatSchema } from "@/schemas/shared.ts";
 
 /**
  * Input schema for gmcp_gmail_delete_label tool
@@ -35,10 +18,7 @@ export const DeleteLabelInputSchema = z.object({
     .describe(
       "The label ID to delete (e.g., 'Label_123'). Cannot delete system labels."
     ),
-  output_format: z
-    .enum(["markdown", "json"])
-    .default("markdown")
-    .describe("Output format: markdown (default) or json"),
+  output_format: OutputFormatSchema,
 });
 
 export type DeleteLabelInput = z.infer<typeof DeleteLabelInputSchema>;
@@ -75,7 +55,11 @@ export async function deleteLabelTool(
 ) {
   try {
     // Check if trying to delete a system label
-    if (SYSTEM_LABELS.includes(params.label_id)) {
+    if (
+      GMAIL_SYSTEM_LABELS.includes(
+        params.label_id as (typeof GMAIL_SYSTEM_LABELS)[number]
+      )
+    ) {
       return {
         content: [
           {

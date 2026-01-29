@@ -4,22 +4,10 @@
 
 import json2md from "json2md";
 import { z } from "zod";
+import { GMAIL_CORE_SYSTEM_LABELS } from "@/constants.ts";
 import type { GmailClient } from "@/gmail.ts";
+import { OutputFormatSchema } from "@/schemas/shared.ts";
 import { createErrorResponse } from "@/utils/tool-helpers.ts";
-
-/**
- * System labels that cannot be renamed
- */
-const SYSTEM_LABELS = [
-  "INBOX",
-  "SENT",
-  "DRAFT",
-  "TRASH",
-  "SPAM",
-  "STARRED",
-  "IMPORTANT",
-  "UNREAD",
-];
 
 /**
  * Input schema for gmcp_gmail_update_label tool
@@ -55,10 +43,7 @@ export const UpdateLabelInputSchema = z.object({
     .describe(
       "Text color in hex format (e.g., '#ffffff'). Must provide both background and text color together."
     ),
-  output_format: z
-    .enum(["markdown", "json"])
-    .default("markdown")
-    .describe("Output format: markdown (default) or json"),
+  output_format: OutputFormatSchema,
 });
 
 export type UpdateLabelInput = z.infer<typeof UpdateLabelInputSchema>;
@@ -143,7 +128,12 @@ export async function updateLabelTool(
 ) {
   try {
     // Check if trying to rename a system label
-    if (params.name && SYSTEM_LABELS.includes(params.label_id)) {
+    if (
+      params.name &&
+      GMAIL_CORE_SYSTEM_LABELS.includes(
+        params.label_id as (typeof GMAIL_CORE_SYSTEM_LABELS)[number]
+      )
+    ) {
       return {
         content: [
           {

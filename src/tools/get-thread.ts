@@ -5,6 +5,7 @@
 import json2md from "json2md";
 import { z } from "zod";
 import type { GmailClient } from "@/gmail.ts";
+import { OutputFormatSchema } from "@/schemas/shared.ts";
 import {
   createErrorResponse,
   formatEmailForOutput,
@@ -24,10 +25,7 @@ export const GetThreadInputSchema = z.object({
     .describe(
       "Whether to include full email body for all messages (default: false)"
     ),
-  output_format: z
-    .enum(["markdown", "json"])
-    .default("markdown")
-    .describe("Output format: markdown (default) or json"),
+  output_format: OutputFormatSchema,
 });
 
 export type GetThreadInput = z.infer<typeof GetThreadInputSchema>;

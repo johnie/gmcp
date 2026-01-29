@@ -6,6 +6,7 @@ import type { OAuth2Client } from "google-auth-library";
 import type { calendar_v3 } from "googleapis";
 import { google } from "googleapis";
 import type { Logger } from "pino";
+import { GoogleApiError } from "@/errors.ts";
 import type {
   CalendarAttendee,
   CalendarEvent,
@@ -76,6 +77,19 @@ const ALL_DAY_DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 export function isAllDayDate(dateString: string): boolean {
   // All-day format: YYYY-MM-DD (10 characters, no time component)
   return ALL_DAY_DATE_REGEX.test(dateString);
+}
+
+/**
+ * Build event date/time object for Calendar API
+ */
+function buildEventDateTime(
+  dateString: string,
+  isAllDay: boolean,
+  timezone?: string
+): calendar_v3.Schema$EventDateTime {
+  return isAllDay
+    ? { date: dateString, timeZone: timezone }
+    : { dateTime: dateString, timeZone: timezone };
 }
 
 /**
@@ -190,7 +204,12 @@ export function createCalendarClient(
           },
           "listCalendars failed"
         );
-        throw new Error(`Failed to list calendars: ${error}`);
+        throw new GoogleApiError(
+          "calendar",
+          "listCalendars",
+          `Failed to list calendars: ${error instanceof Error ? error.message : String(error)}`,
+          error instanceof Error ? error : undefined
+        );
       }
     },
 
@@ -252,8 +271,11 @@ export function createCalendarClient(
           },
           "listEvents failed"
         );
-        throw new Error(
-          `Failed to list events from calendar ${calendarId}: ${error}`
+        throw new GoogleApiError(
+          "calendar",
+          "listEvents",
+          `Failed to list events from calendar ${calendarId}: ${error instanceof Error ? error.message : String(error)}`,
+          error instanceof Error ? error : undefined
         );
       }
     },
@@ -294,8 +316,11 @@ export function createCalendarClient(
           },
           "getEvent failed"
         );
-        throw new Error(
-          `Failed to get event ${eventId} from calendar ${calendarId}: ${error}`
+        throw new GoogleApiError(
+          "calendar",
+          "getEvent",
+          `Failed to get event ${eventId} from calendar ${calendarId}: ${error instanceof Error ? error.message : String(error)}`,
+          error instanceof Error ? error : undefined
         );
       }
     },
@@ -339,12 +364,8 @@ export function createCalendarClient(
           summary,
           description,
           location,
-          start: isAllDay
-            ? { date: start, timeZone: timezone }
-            : { dateTime: start, timeZone: timezone },
-          end: isAllDay
-            ? { date: end, timeZone: timezone }
-            : { dateTime: end, timeZone: timezone },
+          start: buildEventDateTime(start, isAllDay, timezone),
+          end: buildEventDateTime(end, isAllDay, timezone),
           attendees: attendees?.map((email) => ({ email })),
           recurrence,
         };
@@ -388,8 +409,11 @@ export function createCalendarClient(
           },
           "createEvent failed"
         );
-        throw new Error(
-          `Failed to create event "${summary}" in calendar ${calendarId}: ${error}`
+        throw new GoogleApiError(
+          "calendar",
+          "createEvent",
+          `Failed to create event "${summary}" in calendar ${calendarId}: ${error instanceof Error ? error.message : String(error)}`,
+          error instanceof Error ? error : undefined
         );
       }
     },

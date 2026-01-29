@@ -27,3 +27,11 @@ export const ThreadIdSchema = z
   .string()
   .min(1, "Thread ID cannot be empty")
   .describe("Gmail thread ID");
+
+/**
+ * Attachment output format schema - used by attachment tools
+ */
+export const AttachmentOutputFormatSchema = z
+  .enum(["base64", "json"])
+  .default("base64")
+  .describe("Output format: base64 (default) or json");

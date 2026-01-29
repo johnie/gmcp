@@ -4,6 +4,7 @@
 
 import { z } from "zod";
 import type { CalendarClient } from "@/calendar.ts";
+import { OutputFormatSchema } from "@/schemas/shared.ts";
 import { calendarListToMarkdown } from "@/utils/markdown.ts";
 import { createErrorResponse } from "@/utils/tool-helpers.ts";
 
@@ -15,10 +16,7 @@ export const CalendarListInputSchema = z.object({
     .boolean()
     .default(false)
     .describe("Include hidden calendars in the results (default: false)"),
-  output_format: z
-    .enum(["markdown", "json"])
-    .default("markdown")
-    .describe("Output format: markdown (default) or json"),
+  output_format: OutputFormatSchema,
 });
 
 export type CalendarListInput = z.infer<typeof CalendarListInputSchema>;

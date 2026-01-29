@@ -4,6 +4,7 @@
 
 import { z } from "zod";
 import type { GmailClient } from "@/gmail.ts";
+import { AttachmentOutputFormatSchema } from "@/schemas/shared.ts";
 import { createErrorResponse } from "@/utils/tool-helpers.ts";
 
 /**
@@ -18,12 +19,7 @@ export const GetAttachmentInputSchema = z.object({
     .string()
     .min(1, "Attachment ID cannot be empty")
     .describe("The attachment ID to download (from list_attachments)"),
-  output_format: z
-    .enum(["base64", "json"])
-    .default("base64")
-    .describe(
-      "Output format: base64 (default, returns raw base64url string) or json (returns structured object)"
-    ),
+  output_format: AttachmentOutputFormatSchema,
 });
 
 export type GetAttachmentInput = z.infer<typeof GetAttachmentInputSchema>;
