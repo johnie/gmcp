@@ -7,6 +7,7 @@ import type { gmail_v1 } from "googleapis";
 import { google } from "googleapis";
 import type { Logger } from "pino";
 import { EMAIL_FETCH_BATCH_SIZE } from "@/constants.ts";
+import { GoogleApiError } from "@/errors.ts";
 import type {
   AttachmentInfo,
   DraftResult,
@@ -379,8 +380,11 @@ export function createGmailClient(
           },
           "searchEmails failed"
         );
-        throw new Error(
-          `Failed to search emails with query "${query}": ${error}`
+        throw new GoogleApiError(
+          "gmail",
+          "searchEmails",
+          `Failed to search emails with query "${query}": ${error instanceof Error ? error.message : String(error)}`,
+          error instanceof Error ? error : undefined
         );
       }
     },
@@ -422,7 +426,12 @@ export function createGmailClient(
           },
           "getMessage failed"
         );
-        throw new Error(`Failed to get message ${messageId}: ${error}`);
+        throw new GoogleApiError(
+          "gmail",
+          "getMessage",
+          `Failed to get message ${messageId}: ${error instanceof Error ? error.message : String(error)}`,
+          error instanceof Error ? error : undefined
+        );
       }
     },
 
@@ -446,7 +455,12 @@ export function createGmailClient(
         const messages = response.data.messages || [];
         return messages.map((message) => parseMessage(message, includeBody));
       } catch (error) {
-        throw new Error(`Failed to get thread ${threadId}: ${error}`);
+        throw new GoogleApiError(
+          "gmail",
+          "getThread",
+          `Failed to get thread ${threadId}: ${error instanceof Error ? error.message : String(error)}`,
+          error instanceof Error ? error : undefined
+        );
       }
     },
 
@@ -486,8 +500,11 @@ export function createGmailClient(
 
         return attachments;
       } catch (error) {
-        throw new Error(
-          `Failed to list attachments for ${messageId}: ${error}`
+        throw new GoogleApiError(
+          "gmail",
+          "listAttachments",
+          `Failed to list attachments for ${messageId}: ${error instanceof Error ? error.message : String(error)}`,
+          error instanceof Error ? error : undefined
         );
       }
     },
@@ -507,14 +524,24 @@ export function createGmailClient(
         });
 
         if (!response.data.data) {
-          throw new Error("Attachment data not found");
+          throw new GoogleApiError(
+            "gmail",
+            "getAttachment",
+            "Attachment data not found"
+          );
         }
 
         // Gmail returns base64url encoded data
         return response.data.data;
       } catch (error) {
-        throw new Error(
-          `Failed to get attachment ${attachmentId} from message ${messageId}: ${error}`
+        if (error instanceof GoogleApiError) {
+          throw error;
+        }
+        throw new GoogleApiError(
+          "gmail",
+          "getAttachment",
+          `Failed to get attachment ${attachmentId} from message ${messageId}: ${error instanceof Error ? error.message : String(error)}`,
+          error instanceof Error ? error : undefined
         );
       }
     },
@@ -539,7 +566,12 @@ export function createGmailClient(
 
         return parseMessage(response.data, false);
       } catch (error) {
-        throw new Error(`Failed to modify labels for ${messageId}: ${error}`);
+        throw new GoogleApiError(
+          "gmail",
+          "modifyLabels",
+          `Failed to modify labels for ${messageId}: ${error instanceof Error ? error.message : String(error)}`,
+          error instanceof Error ? error : undefined
+        );
       }
     },
 
@@ -587,8 +619,11 @@ export function createGmailClient(
           },
           "batchModifyLabels failed"
         );
-        throw new Error(
-          `Failed to batch modify labels on ${messageIds.length} messages: ${error}`
+        throw new GoogleApiError(
+          "gmail",
+          "batchModifyLabels",
+          `Failed to batch modify labels on ${messageIds.length} messages: ${error instanceof Error ? error.message : String(error)}`,
+          error instanceof Error ? error : undefined
         );
       }
     },
@@ -652,7 +687,12 @@ export function createGmailClient(
           },
           "sendEmail failed"
         );
-        throw new Error(`Failed to send email to ${to}: ${error}`);
+        throw new GoogleApiError(
+          "gmail",
+          "sendEmail",
+          `Failed to send email to ${to}: ${error instanceof Error ? error.message : String(error)}`,
+          error instanceof Error ? error : undefined
+        );
       }
     },
 
@@ -698,8 +738,11 @@ export function createGmailClient(
           labelIds: response.data.labelIds || undefined,
         };
       } catch (error) {
-        throw new Error(
-          `Failed to reply to message ${messageId} in thread ${threadId}: ${error}`
+        throw new GoogleApiError(
+          "gmail",
+          "replyToEmail",
+          `Failed to reply to message ${messageId} in thread ${threadId}: ${error instanceof Error ? error.message : String(error)}`,
+          error instanceof Error ? error : undefined
         );
       }
     },
@@ -743,7 +786,12 @@ export function createGmailClient(
           },
         };
       } catch (error) {
-        throw new Error(`Failed to create draft to ${to}: ${error}`);
+        throw new GoogleApiError(
+          "gmail",
+          "createDraft",
+          `Failed to create draft to ${to}: ${error instanceof Error ? error.message : String(error)}`,
+          error instanceof Error ? error : undefined
+        );
       }
     },
 
@@ -759,7 +807,12 @@ export function createGmailClient(
         const labels = response.data.labels || [];
         return labels.map((label) => parseLabel(label));
       } catch (error) {
-        throw new Error(`Failed to list labels: ${error}`);
+        throw new GoogleApiError(
+          "gmail",
+          "listLabels",
+          `Failed to list labels: ${error instanceof Error ? error.message : String(error)}`,
+          error instanceof Error ? error : undefined
+        );
       }
     },
 
@@ -775,7 +828,12 @@ export function createGmailClient(
 
         return parseLabel(response.data);
       } catch (error) {
-        throw new Error(`Failed to get label ${labelId}: ${error}`);
+        throw new GoogleApiError(
+          "gmail",
+          "getLabel",
+          `Failed to get label ${labelId}: ${error instanceof Error ? error.message : String(error)}`,
+          error instanceof Error ? error : undefined
+        );
       }
     },
 
@@ -805,7 +863,12 @@ export function createGmailClient(
 
         return parseLabel(response.data);
       } catch (error) {
-        throw new Error(`Failed to create label "${name}": ${error}`);
+        throw new GoogleApiError(
+          "gmail",
+          "createLabel",
+          `Failed to create label "${name}": ${error instanceof Error ? error.message : String(error)}`,
+          error instanceof Error ? error : undefined
+        );
       }
     },
 
@@ -838,7 +901,12 @@ export function createGmailClient(
 
         return parseLabel(response.data);
       } catch (error) {
-        throw new Error(`Failed to update label ${labelId}: ${error}`);
+        throw new GoogleApiError(
+          "gmail",
+          "updateLabel",
+          `Failed to update label ${labelId}: ${error instanceof Error ? error.message : String(error)}`,
+          error instanceof Error ? error : undefined
+        );
       }
     },
 
@@ -852,7 +920,12 @@ export function createGmailClient(
           id: labelId,
         });
       } catch (error) {
-        throw new Error(`Failed to delete label ${labelId}: ${error}`);
+        throw new GoogleApiError(
+          "gmail",
+          "deleteLabel",
+          `Failed to delete label ${labelId}: ${error instanceof Error ? error.message : String(error)}`,
+          error instanceof Error ? error : undefined
+        );
       }
     },
 
@@ -867,7 +940,12 @@ export function createGmailClient(
           id: messageId,
         });
       } catch (error) {
-        throw new Error(`Failed to delete message ${messageId}: ${error}`);
+        throw new GoogleApiError(
+          "gmail",
+          "deleteEmail",
+          `Failed to delete message ${messageId}: ${error instanceof Error ? error.message : String(error)}`,
+          error instanceof Error ? error : undefined
+        );
       }
     },
   };
