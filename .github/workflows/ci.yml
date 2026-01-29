@@ -25,4 +25,4 @@ jobs:
         run: bun x ultracite check
 
       - name: Run tests
-        run: bun test
+        run: bun run test

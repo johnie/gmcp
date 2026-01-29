@@ -6,10 +6,13 @@ import { describe, expect, it } from "vitest";
 import {
   attachmentsToMarkdown,
   batchModificationToMarkdown,
+  calendarListToMarkdown,
   draftCreatedToMarkdown,
   emailPreviewToMarkdown,
   emailSentToMarkdown,
   emailToMarkdown,
+  eventListToMarkdown,
+  eventToMarkdown,
   labelModificationToMarkdown,
   replyPreviewToMarkdown,
   replySentToMarkdown,
@@ -595,5 +598,250 @@ describe("draftCreatedToMarkdown", () => {
 
     expect(markdown).not.toContain("**CC:**");
     expect(markdown).not.toContain("**BCC:**");
+  });
+});
+
+describe("calendarListToMarkdown", () => {
+  it("shows empty calendar list message", () => {
+    const data = {
+      count: 0,
+      calendars: [],
+    };
+    const result = calendarListToMarkdown(data);
+
+    expect(result).toContain("Google Calendars");
+    expect(result).toContain("Total Calendars:** 0");
+    expect(result).toContain("No calendars found");
+  });
+
+  it("shows calendars with details", () => {
+    const data = {
+      count: 2,
+      calendars: [
+        {
+          id: "cal1",
+          summary: "Work Calendar",
+          timezone: "America/New_York",
+          access_role: "owner",
+        },
+        {
+          id: "cal2",
+          summary: "Personal",
+          timezone: "Europe/London",
+          access_role: "reader",
+          description: "My personal calendar",
+        },
+      ],
+    };
+    const result = calendarListToMarkdown(data);
+
+    expect(result).toContain("Work Calendar");
+    expect(result).toContain("Personal");
+    expect(result).toContain("America/New_York");
+    expect(result).toContain("owner");
+    expect(result).toContain("My personal calendar");
+  });
+
+  it("shows primary calendar indicator", () => {
+    const data = {
+      count: 1,
+      calendars: [
+        {
+          id: "primary",
+          summary: "Main Calendar",
+          primary: true,
+          timezone: "UTC",
+          access_role: "owner",
+        },
+      ],
+    };
+    const result = calendarListToMarkdown(data);
+
+    expect(result).toContain("Primary:** Yes");
+  });
+});
+
+describe("eventListToMarkdown", () => {
+  it("shows empty events message", () => {
+    const data = {
+      calendar_id: "primary",
+      count: 0,
+      events: [],
+    };
+    const result = eventListToMarkdown(data);
+
+    expect(result).toContain("Calendar Events");
+    expect(result).toContain("Calendar:** primary");
+    expect(result).toContain("No events found");
+  });
+
+  it("shows events with details", () => {
+    const data = {
+      calendar_id: "primary",
+      count: 1,
+      events: [
+        {
+          id: "event1",
+          summary: "Team Meeting",
+          start: { dateTime: "2024-01-15T10:00:00Z" },
+          end: { dateTime: "2024-01-15T11:00:00Z" },
+          status: "confirmed",
+        },
+      ],
+    };
+    const result = eventListToMarkdown(data);
+
+    expect(result).toContain("Team Meeting");
+    expect(result).toContain("event1");
+    expect(result).toContain("confirmed");
+  });
+
+  it("shows events with attendees", () => {
+    const data = {
+      calendar_id: "primary",
+      count: 1,
+      events: [
+        {
+          id: "event1",
+          summary: "Meeting",
+          start: { dateTime: "2024-01-15T10:00:00Z" },
+          end: { dateTime: "2024-01-15T11:00:00Z" },
+          attendees: [
+            { email: "user1@example.com", response_status: "accepted" },
+            {
+              email: "user2@example.com",
+              display_name: "User Two",
+              optional: true,
+            },
+          ],
+        },
+      ],
+    };
+    const result = eventListToMarkdown(data);
+
+    expect(result).toContain("Attendees");
+    expect(result).toContain("user1@example.com");
+    expect(result).toContain("accepted");
+    expect(result).toContain("User Two");
+    expect(result).toContain("[Optional]");
+  });
+});
+
+describe("eventToMarkdown", () => {
+  it("shows event with success message", () => {
+    const event = {
+      id: "event123",
+      summary: "Created Event",
+      start: { dateTime: "2024-01-15T10:00:00Z" },
+      end: { dateTime: "2024-01-15T11:00:00Z" },
+    };
+    const result = eventToMarkdown(event, "Event Created Successfully");
+
+    expect(result).toContain("Event Created Successfully");
+    expect(result).toContain("Created Event");
+  });
+
+  it("shows event without success message", () => {
+    const event = {
+      id: "event123",
+      summary: "Regular Event",
+      start: { dateTime: "2024-01-15T10:00:00Z" },
+      end: { dateTime: "2024-01-15T11:00:00Z" },
+    };
+    const result = eventToMarkdown(event);
+
+    expect(result).toContain("Calendar Event");
+    expect(result).toContain("Regular Event");
+  });
+
+  it("shows event with description", () => {
+    const event = {
+      id: "event123",
+      summary: "Documented Event",
+      description: "This is a detailed description of the event.",
+      start: { dateTime: "2024-01-15T10:00:00Z" },
+      end: { dateTime: "2024-01-15T11:00:00Z" },
+    };
+    const result = eventToMarkdown(event);
+
+    expect(result).toContain("Description");
+    expect(result).toContain("This is a detailed description");
+  });
+
+  it("shows event with attendees", () => {
+    const event = {
+      id: "event123",
+      summary: "Team Event",
+      start: { dateTime: "2024-01-15T10:00:00Z" },
+      end: { dateTime: "2024-01-15T11:00:00Z" },
+      attendees: [{ email: "user@example.com", response_status: "tentative" }],
+    };
+    const result = eventToMarkdown(event);
+
+    expect(result).toContain("Attendees");
+    expect(result).toContain("user@example.com");
+    expect(result).toContain("tentative");
+  });
+
+  it("shows event with recurrence", () => {
+    const event = {
+      id: "event123",
+      summary: "Recurring Event",
+      start: { dateTime: "2024-01-15T10:00:00Z" },
+      end: { dateTime: "2024-01-15T11:00:00Z" },
+      recurrence: ["RRULE:FREQ=WEEKLY;COUNT=10"],
+    };
+    const result = eventToMarkdown(event);
+
+    expect(result).toContain("Recurrence");
+    expect(result).toContain("RRULE:FREQ=WEEKLY");
+  });
+
+  it("shows event with metadata (creator, organizer, timestamps)", () => {
+    const event = {
+      id: "event123",
+      summary: "Full Event",
+      start: { dateTime: "2024-01-15T10:00:00Z" },
+      end: { dateTime: "2024-01-15T11:00:00Z" },
+      creator: { email: "creator@example.com", display_name: "Creator Name" },
+      organizer: { email: "organizer@example.com" },
+      created: "2024-01-01T00:00:00Z",
+      updated: "2024-01-14T12:00:00Z",
+    };
+    const result = eventToMarkdown(event);
+
+    expect(result).toContain("Created by");
+    expect(result).toContain("Creator Name");
+    expect(result).toContain("Organized by");
+    expect(result).toContain("organizer@example.com");
+    expect(result).toContain("Created");
+    expect(result).toContain("Last Updated");
+  });
+
+  it("shows all-day event format", () => {
+    const event = {
+      id: "event123",
+      summary: "All Day Event",
+      start: { date: "2024-01-15" },
+      end: { date: "2024-01-16" },
+    };
+    const result = eventToMarkdown(event);
+
+    expect(result).toContain("2024-01-15");
+    expect(result).toContain("All day");
+  });
+
+  it("shows event with Google Meet link", () => {
+    const event = {
+      id: "event123",
+      summary: "Video Meeting",
+      start: { dateTime: "2024-01-15T10:00:00Z" },
+      end: { dateTime: "2024-01-15T11:00:00Z" },
+      hangout_link: "https://meet.google.com/abc-defg-hij",
+    };
+    const result = eventToMarkdown(event);
+
+    expect(result).toContain("Google Meet");
+    expect(result).toContain("https://meet.google.com/abc-defg-hij");
   });
 });
