@@ -121,3 +121,62 @@ describe("getHeader", () => {
     expect(result).toBe("first");
   });
 });
+
+describe("parseScopes with calendar", () => {
+  it("maps calendar readonly scope", () => {
+    const result = parseScopes("calendar.readonly");
+    expect(result).toEqual([
+      "https://www.googleapis.com/auth/calendar.readonly",
+    ]);
+  });
+
+  it("maps calendar events scope", () => {
+    const result = parseScopes("calendar.events");
+    expect(result).toEqual(["https://www.googleapis.com/auth/calendar.events"]);
+  });
+
+  it("maps full calendar scope", () => {
+    const result = parseScopes("calendar");
+    expect(result).toEqual(["https://www.googleapis.com/auth/calendar"]);
+  });
+
+  it("maps mixed gmail and calendar scopes", () => {
+    const result = parseScopes("gmail.readonly,calendar.readonly");
+    expect(result).toEqual([
+      "https://www.googleapis.com/auth/gmail.readonly",
+      "https://www.googleapis.com/auth/calendar.readonly",
+    ]);
+  });
+
+  it("maps multiple calendar scopes", () => {
+    const result = parseScopes(
+      "calendar.readonly,calendar.events,calendar.calendarlist.readonly"
+    );
+    expect(result).toEqual([
+      "https://www.googleapis.com/auth/calendar.readonly",
+      "https://www.googleapis.com/auth/calendar.events",
+      "https://www.googleapis.com/auth/calendar.calendarlist.readonly",
+    ]);
+  });
+
+  it("maps all known calendar scope names", () => {
+    // Test all known calendar scopes
+    const calendarScopes = {
+      "calendar.readonly": "https://www.googleapis.com/auth/calendar.readonly",
+      calendar: "https://www.googleapis.com/auth/calendar",
+      "calendar.events": "https://www.googleapis.com/auth/calendar.events",
+      "calendar.events.readonly":
+        "https://www.googleapis.com/auth/calendar.events.readonly",
+      "calendar.settings.readonly":
+        "https://www.googleapis.com/auth/calendar.settings.readonly",
+      "calendar.calendarlist.readonly":
+        "https://www.googleapis.com/auth/calendar.calendarlist.readonly",
+      "calendar.calendarlist":
+        "https://www.googleapis.com/auth/calendar.calendarlist",
+    };
+    for (const [shortName, fullUrl] of Object.entries(calendarScopes)) {
+      const result = parseScopes(shortName);
+      expect(result).toEqual([fullUrl]);
+    }
+  });
+});

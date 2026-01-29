@@ -14,6 +14,11 @@ export default defineConfig({
         "src/**/__tests__/**",
         "src/index.ts",
         "src/auth.ts",
+        "src/cli.ts",
+        "src/auth-cli.ts",
+        "src/cli/**",
+        "src/logger.ts",
+        "src/version.ts",
       ],
       thresholds: {
         lines: 80,

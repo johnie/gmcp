@@ -80,6 +80,7 @@ export function createMockGmailClient(
     createLabel: vi.fn().mockResolvedValue(defaultLabel),
     updateLabel: vi.fn().mockResolvedValue(defaultLabel),
     deleteLabel: vi.fn().mockResolvedValue(undefined),
+    deleteEmail: vi.fn().mockResolvedValue(undefined),
     ...overrides,
   };
 }
