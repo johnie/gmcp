@@ -18,6 +18,7 @@ Write code that is **accessible, performant, type-safe, and maintainable**. Focu
 
 ### Type Safety & Explicitness
 
+- Use `interface` for object types; use `type` only for unions, intersections, and aliases
 - Use explicit types for function parameters and return values when they enhance clarity
 - Prefer `unknown` over `any` when the type is genuinely unknown
 - Use const assertions (`as const`) for immutable values and literal types
