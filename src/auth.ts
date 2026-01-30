@@ -2,8 +2,7 @@
  * OAuth2 authentication module for GMCP Server
  */
 
-import type { OAuth2Client } from "google-auth-library";
-import { google } from "googleapis";
+import { OAuth2Client } from "google-auth-library";
 import type { Logger } from "pino";
 import { AuthError, ConfigurationError } from "@/errors.ts";
 import type { OAuth2Credentials, StoredTokens } from "@/types.ts";
@@ -88,7 +87,7 @@ export function createOAuth2Client(
   credentials: OAuth2Credentials
 ): OAuth2Client {
   const { client_id, client_secret, redirect_uris } = credentials.installed;
-  return new google.auth.OAuth2(client_id, client_secret, redirect_uris[0]);
+  return new OAuth2Client(client_id, client_secret, redirect_uris[0]);
 }
 
 /**

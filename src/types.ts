@@ -2,7 +2,7 @@
  * TypeScript type definitions for GMCP Server
  */
 
-import type { gmail_v1 } from "googleapis";
+import type { gmail_v1 } from "@googleapis/gmail";
 import { z } from "zod";
 
 /**

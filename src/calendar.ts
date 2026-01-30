@@ -2,9 +2,8 @@
  * Google Calendar API wrapper for MCP Server
  */
 
+import { calendar, type calendar_v3 } from "@googleapis/calendar";
 import type { OAuth2Client } from "google-auth-library";
-import type { calendar_v3 } from "googleapis";
-import { google } from "googleapis";
 import type { Logger } from "pino";
 import { GoogleApiError } from "@/errors.ts";
 import type {
@@ -51,17 +50,17 @@ export interface CalendarClient {
  * Exported for testing
  */
 export function parseCalendar(
-  calendar: calendar_v3.Schema$CalendarListEntry
+  calendarEntry: calendar_v3.Schema$CalendarListEntry
 ): CalendarInfo {
   return {
-    id: calendar.id || "",
-    summary: calendar.summary || "",
-    description: calendar.description ?? undefined,
-    timeZone: calendar.timeZone ?? undefined,
-    primary: calendar.primary ?? undefined,
-    backgroundColor: calendar.backgroundColor ?? undefined,
-    foregroundColor: calendar.foregroundColor ?? undefined,
-    accessRole: calendar.accessRole ?? undefined,
+    id: calendarEntry.id || "",
+    summary: calendarEntry.summary || "",
+    description: calendarEntry.description ?? undefined,
+    timeZone: calendarEntry.timeZone ?? undefined,
+    primary: calendarEntry.primary ?? undefined,
+    backgroundColor: calendarEntry.backgroundColor ?? undefined,
+    foregroundColor: calendarEntry.foregroundColor ?? undefined,
+    accessRole: calendarEntry.accessRole ?? undefined,
   };
 }
 
@@ -171,7 +170,7 @@ export function createCalendarClient(
   auth: OAuth2Client,
   logger?: Logger
 ): CalendarClient {
-  const calendar = google.calendar({ version: "v3", auth });
+  const calendarClient = calendar({ version: "v3", auth });
 
   return {
     /**
@@ -183,7 +182,7 @@ export function createCalendarClient(
       logger?.debug({ showHidden }, "listCalendars start");
 
       try {
-        const response = await calendar.calendarList.list({
+        const response = await calendarClient.calendarList.list({
           showHidden,
         });
 
@@ -239,7 +238,7 @@ export function createCalendarClient(
       );
 
       try {
-        const response = await calendar.events.list({
+        const response = await calendarClient.events.list({
           calendarId,
           timeMin,
           timeMax,
@@ -293,7 +292,7 @@ export function createCalendarClient(
       logger?.debug({ calendarId, eventId }, "getEvent start");
 
       try {
-        const response = await calendar.events.get({
+        const response = await calendarClient.events.get({
           calendarId,
           eventId,
         });
@@ -380,7 +379,7 @@ export function createCalendarClient(
           };
         }
 
-        const response = await calendar.events.insert({
+        const response = await calendarClient.events.insert({
           calendarId,
           requestBody: eventResource,
           conferenceDataVersion: addMeet ? 1 : undefined,
