@@ -69,7 +69,13 @@ npx gmcp auth
 bun run auth
 ```
 
-Follow the prompts to authorize. The browser will show "connection refused" after authorization - this is expected. Copy the `code=` parameter from the URL.
+Your browser will open automatically. After you authorize, the auth code is captured automatically via a local callback server—no manual copying needed.
+
+**Manual mode:** If the local server doesn't work (e.g., port conflicts, remote environments), use `--manual` to copy the code from the URL yourself:
+
+```bash
+gmcp auth --manual
+```
 
 ### 3. Run
 
@@ -224,6 +230,9 @@ Commands:
 Options:
   --help, -h       Show usage
   --version, -v    Show version
+
+Auth Options:
+  --manual, -m     Skip local callback server; manually paste code from URL
 ```
 
 ## Testing
