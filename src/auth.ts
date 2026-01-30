@@ -82,12 +82,16 @@ export async function saveTokens(
 
 /**
  * Create OAuth2 client from credentials
+ * @param credentials - OAuth2 credentials from Google Cloud Console
+ * @param redirectUriOverride - Optional override for redirect URI (useful for local callback server)
  */
 export function createOAuth2Client(
-  credentials: OAuth2Credentials
+  credentials: OAuth2Credentials,
+  redirectUriOverride?: string
 ): OAuth2Client {
   const { client_id, client_secret, redirect_uris } = credentials.installed;
-  return new OAuth2Client(client_id, client_secret, redirect_uris[0]);
+  const redirectUri = redirectUriOverride ?? redirect_uris[0];
+  return new OAuth2Client(client_id, client_secret, redirectUri);
 }
 
 /**
@@ -199,4 +203,58 @@ export function getEnvConfig() {
   const scopes = parseScopes(scopesEnv);
 
   return { credentialsPath, tokenPath, scopes };
+}
+
+/**
+ * Default port for local OAuth callback server
+ */
+const DEFAULT_OAUTH_PORT = 3000;
+
+/**
+ * Regex to match trailing slash
+ */
+const TRAILING_SLASH_REGEX = /\/$/;
+
+/**
+ * Normalize redirect URI to ensure it has an explicit port.
+ * Google OAuth for desktop apps allows any port on localhost.
+ * @param redirectUri - The redirect URI (e.g., "http://localhost" or "http://localhost:8080")
+ * @returns Object with normalized URI and port
+ */
+export function normalizeRedirectUri(redirectUri: string): {
+  uri: string;
+  port: number;
+} {
+  try {
+    const url = new URL(redirectUri);
+
+    // If port is explicitly specified, use it as-is
+    if (url.port) {
+      return {
+        uri: redirectUri,
+        port: Number.parseInt(url.port, 10),
+      };
+    }
+
+    // No port specified - add our default port for localhost/loopback
+    const host = url.hostname.toLowerCase();
+    if (host === "localhost" || host === "127.0.0.1") {
+      url.port = String(DEFAULT_OAUTH_PORT);
+      return {
+        uri: url.toString().replace(TRAILING_SLASH_REGEX, ""),
+        port: DEFAULT_OAUTH_PORT,
+      };
+    }
+
+    // Non-localhost URI - use as-is with protocol default port
+    return {
+      uri: redirectUri,
+      port: url.protocol === "https:" ? 443 : 80,
+    };
+  } catch {
+    return {
+      uri: `http://localhost:${DEFAULT_OAUTH_PORT}`,
+      port: DEFAULT_OAUTH_PORT,
+    };
+  }
 }
