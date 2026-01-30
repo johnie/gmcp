@@ -2,9 +2,8 @@
  * Gmail API wrapper for MCP Server
  */
 
+import { gmail, type gmail_v1 } from "@googleapis/gmail";
 import type { OAuth2Client } from "google-auth-library";
-import type { gmail_v1 } from "googleapis";
-import { google } from "googleapis";
 import type { Logger } from "pino";
 import { EMAIL_FETCH_BATCH_SIZE } from "@/constants.ts";
 import { GoogleApiError } from "@/errors.ts";
@@ -287,7 +286,7 @@ export function createGmailClient(
   auth: OAuth2Client,
   logger?: Logger
 ): GmailClient {
-  const gmail = google.gmail({ version: "v1", auth });
+  const gmailClient = gmail({ version: "v1", auth });
 
   return {
     /**
@@ -310,7 +309,7 @@ export function createGmailClient(
       );
 
       try {
-        const listResponse = await gmail.users.messages.list({
+        const listResponse = await gmailClient.users.messages.list({
           userId: "me",
           q: query,
           maxResults,
@@ -335,7 +334,7 @@ export function createGmailClient(
             batch.map(async (message) => {
               // Message ID is guaranteed to exist due to filter above
               const messageId = message.id ?? "";
-              const details = await gmail.users.messages.get({
+              const details = await gmailClient.users.messages.get({
                 userId: "me",
                 id: messageId,
                 format: includeBody ? "full" : "metadata",
@@ -400,7 +399,7 @@ export function createGmailClient(
       logger?.debug({ messageId, includeBody }, "getMessage start");
 
       try {
-        const response = await gmail.users.messages.get({
+        const response = await gmailClient.users.messages.get({
           userId: "me",
           id: messageId,
           format: includeBody ? "full" : "metadata",
@@ -443,7 +442,7 @@ export function createGmailClient(
       includeBody = false
     ): Promise<EmailMessage[]> {
       try {
-        const response = await gmail.users.threads.get({
+        const response = await gmailClient.users.threads.get({
           userId: "me",
           id: threadId,
           format: includeBody ? "full" : "metadata",
@@ -469,7 +468,7 @@ export function createGmailClient(
      */
     async listAttachments(messageId: string): Promise<AttachmentInfo[]> {
       try {
-        const response = await gmail.users.messages.get({
+        const response = await gmailClient.users.messages.get({
           userId: "me",
           id: messageId,
           format: "full",
@@ -517,7 +516,7 @@ export function createGmailClient(
       attachmentId: string
     ): Promise<string> {
       try {
-        const response = await gmail.users.messages.attachments.get({
+        const response = await gmailClient.users.messages.attachments.get({
           userId: "me",
           messageId,
           id: attachmentId,
@@ -555,7 +554,7 @@ export function createGmailClient(
       removeLabelIds?: string[]
     ): Promise<EmailMessage> {
       try {
-        const response = await gmail.users.messages.modify({
+        const response = await gmailClient.users.messages.modify({
           userId: "me",
           id: messageId,
           requestBody: {
@@ -594,7 +593,7 @@ export function createGmailClient(
       );
 
       try {
-        await gmail.users.messages.batchModify({
+        await gmailClient.users.messages.batchModify({
           userId: "me",
           requestBody: {
             ids: messageIds,
@@ -653,7 +652,7 @@ export function createGmailClient(
         });
         const encodedMessage = encodeMessage(mimeMessage);
 
-        const response = await gmail.users.messages.send({
+        const response = await gmailClient.users.messages.send({
           userId: "me",
           requestBody: {
             raw: encodedMessage,
@@ -724,7 +723,7 @@ export function createGmailClient(
         });
         const encodedMessage = encodeMessage(mimeMessage);
 
-        const response = await gmail.users.messages.send({
+        const response = await gmailClient.users.messages.send({
           userId: "me",
           requestBody: {
             raw: encodedMessage,
@@ -769,7 +768,7 @@ export function createGmailClient(
         });
         const encodedMessage = encodeMessage(mimeMessage);
 
-        const response = await gmail.users.drafts.create({
+        const response = await gmailClient.users.drafts.create({
           userId: "me",
           requestBody: {
             message: {
@@ -800,7 +799,7 @@ export function createGmailClient(
      */
     async listLabels(): Promise<GmailLabel[]> {
       try {
-        const response = await gmail.users.labels.list({
+        const response = await gmailClient.users.labels.list({
           userId: "me",
         });
 
@@ -821,7 +820,7 @@ export function createGmailClient(
      */
     async getLabel(labelId: string): Promise<GmailLabel> {
       try {
-        const response = await gmail.users.labels.get({
+        const response = await gmailClient.users.labels.get({
           userId: "me",
           id: labelId,
         });
@@ -848,7 +847,7 @@ export function createGmailClient(
       textColor?: string
     ): Promise<GmailLabel> {
       try {
-        const response = await gmail.users.labels.create({
+        const response = await gmailClient.users.labels.create({
           userId: "me",
           requestBody: {
             name,
@@ -884,7 +883,7 @@ export function createGmailClient(
       textColor?: string
     ): Promise<GmailLabel> {
       try {
-        const response = await gmail.users.labels.update({
+        const response = await gmailClient.users.labels.update({
           userId: "me",
           id: labelId,
           requestBody: {
@@ -915,7 +914,7 @@ export function createGmailClient(
      */
     async deleteLabel(labelId: string): Promise<void> {
       try {
-        await gmail.users.labels.delete({
+        await gmailClient.users.labels.delete({
           userId: "me",
           id: labelId,
         });
@@ -935,7 +934,7 @@ export function createGmailClient(
      */
     async deleteEmail(messageId: string): Promise<void> {
       try {
-        await gmail.users.messages.delete({
+        await gmailClient.users.messages.delete({
           userId: "me",
           id: messageId,
         });
