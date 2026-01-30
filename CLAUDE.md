@@ -26,7 +26,7 @@ GMCP is an MCP (Model Context Protocol) server that provides Gmail and Google Ca
 
 ### TypeScript Types
 
-- Use `type` instead of `interface` - always
+- Use `interface` for object types; use `type` only for unions, intersections, and aliases
 - Infer types from Zod schemas: `type Foo = z.infer<typeof FooSchema>`
 - Explicit return types on exported functions
 - Use `import type` for type-only imports
@@ -50,11 +50,14 @@ GMCP is an MCP (Model Context Protocol) server that provides Gmail and Google Ca
 ### Example Patterns
 
 ```ts
-// Type definition
-type EmailMessage = {
+// Interface for object types
+interface EmailMessage {
   id: string
   subject: string
 }
+
+// Type alias for unions/intersections
+type Status = "pending" | "success" | "error"
 
 // Factory function
 function createClient(auth: Auth): Client {
